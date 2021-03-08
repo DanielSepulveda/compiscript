@@ -1,0 +1,13 @@
+program helloWorld;
+var hello, test : int; world: float;
+{
+  hello = 1;
+  test = (hello + 1) * 2;
+
+  print(test, hello);
+  if (test > hello) {
+    print("Test es mayor a hello");
+  } else {
+    print("Hello es mayor a test");
+  };
+}

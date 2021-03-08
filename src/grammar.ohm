@@ -1,0 +1,80 @@
+LittleDuck {
+  /*
+    Starting Rule
+  */
+
+  Start = Programa
+
+  /*
+    Lexical Rules
+  */
+
+  // Keywords
+  program = "program"
+  var = "var"
+  if = "if"
+  else = "else"
+  print = "print"
+  type = "int" | "float"
+  keyword (a keyword) = program | var | if | print | type
+            | else
+
+  // Patterns
+  char = any
+  stringChar = ~"\"" char
+  string = "\"" stringChar* "\""
+  decimalDigit = "0".."9"
+  nonZeroDigit = "1".."9"
+  integer (an integer) = nonZeroDigit decimalDigit* -- nonZero
+          | "0"                                     -- zero
+  float (a float) = integer "." decimalDigit* -- completeFloat
+          | "." decimalDigit*                 -- decimalFloat
+  identifierStart = letter | "_"
+  identifierPart = identifierStart | decimalDigit
+  identifierName = identifierStart identifierPart*
+  identifier (an identifier) = ~keyword identifierName
+  mulop = "*" | "/"
+  adop = "+" | "-"
+
+  /*
+    Syntactic Rules (Expressions)
+  */
+
+  // Vars
+  VarList = NonemptyListOf<identifier, ","> ":" type ";"
+  Vars = "var" VarList+
+  // CTE
+  CTE = identifier | integer | float
+  // Factor
+  Factor = "(" Expresion ")"  -- factorExpresion
+          | adop? CTE         -- factorCte
+  // Termino
+  Termino = Termino mulop Factor -- termFactor
+          | Factor
+  // Exp
+  Exp = Exp adop Termino -- expTerm
+        | Termino
+  // Expresion
+  ConditionalExp = ">" Exp
+                  | "<" Exp
+                  | "<>" Exp
+  Expresion = Exp ConditionalExp?
+  // Bloque
+  BloqueBody = BloqueBody Estatuto -- multipleEstatutos
+              | Estatuto
+  Bloque = "{" BloqueBody? "}"
+  // Escritura
+  PrintStmt = Expresion | string
+  Escritura = print "(" NonemptyListOf<PrintStmt, ","> ")" ";"
+  // Asignacion
+  Asignacion = identifier "=" Expresion ";"
+  // Condicion
+  ElseCondicion = else Bloque
+  Condicion = if "(" Expresion ")" Bloque ElseCondicion? ";"
+  // Estatuto
+  Estatuto = Asignacion
+            | Condicion
+            | Escritura
+  // Programa
+  Programa = program identifier ";" Vars? Bloque
+}
