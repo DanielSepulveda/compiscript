@@ -1,6 +1,4 @@
-# LittleDuck 2020 Language
-
-![LittleDuck](/assets/LittleDuck.png)
+# Compiscript
 
 ## How to use
 
