@@ -9,7 +9,8 @@ Compiscript {
 /*                                Lexical Rules                               */
 /* -------------------------------------------------------------------------- */
 
-  // Keywords
+/* -------------------------------- Keywords -------------------------------- */
+
   program = "Program"
   main = "main"
   vars = "vars"
@@ -28,7 +29,8 @@ Compiscript {
             | else  | main | function | return  | read
             | while | for  | until    | void
 
-  // Patterns
+/* -------------------------------- Patterns -------------------------------- */
+
   char = any
   stringChar = ~"\"" char
   string = "\"" stringChar* "\""
