@@ -1,13 +1,39 @@
-program helloWorld;
-var hello, test : int; world: float;
-{
-  hello = 1;
-  test = (hello + 1) * 2;
+Program helloWorld;
+vars
+  i, j, p: int;
+  name: string;
 
-  print(test, hello);
-  if (test > hello) {
-    print("Test es mayor a hello");
+int function fact (j: int)
+vars
+  i: int;
+{
+  i = j + (p - j*2 + j);
+  if (j == 1) {
+    return (j);
   } else {
-    print("Hello es mayor a test");
-  };
+    return (j * fact(j-1));
+  }
+}
+
+void function pelos (y: int)
+vars
+  x: int;
+{
+  read(name);
+  x = y;
+  while (x < y) {
+    print(name, x);
+    x = x + 1;
+  }
+}
+
+main ()
+{
+  read(p);
+  j = p * 2;
+  i = fact(p);
+  pelos(p);
+  for i = 1 until 10 {
+    print("Hello World");
+  }
 }

@@ -38,19 +38,3 @@ fs.readdirSync(TESTING_DIR).forEach((file) => {
 
   console.log('\n');
 });
-
-// const testFile = fs
-//   .readFileSync(path.join(__dirname, '/test/valid.txt'))
-//   .toString();
-
-// spinner.start('Testing...');
-
-// const m = myGrammar.match(testFile);
-// if (m.succeeded()) {
-//   spinner.succeed('Done!');
-//   console.log(chalk.green(printLog('OK')));
-// } else {
-//   spinner.fail('Error!');
-//   console.log(chalk.red(printLog('NOT OK')));
-//   console.log(m.message);
-// }
