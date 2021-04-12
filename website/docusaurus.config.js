@@ -2,26 +2,32 @@
 module.exports = {
   title: 'Compiscript',
   tagline: 'Yet another compis compiler',
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://compiscript-website.vercel.app/',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'DanielSepulveda', // Usually your GitHub org/user name.
-  projectName: 'compiscript', // Usually your repo name.
+  organizationName: 'DanielSepulveda',
+  projectName: 'compiscript',
   themeConfig: {
     navbar: {
       title: 'Compiscript',
-      // logo: {
-      //   alt: 'My Site Logo',
-      //   src: 'img/logo.svg',
-      // },
+      logo: {
+        alt: 'Tec de Monterrey logo',
+        src: 'img/logo.svg',
+        srcDark: 'img/logo_white.svg',
+      },
       items: [
         {
           to: 'docs/',
           activeBasePath: 'docs',
           label: 'Docs',
           position: 'left',
+        },
+        {
+          to: 'docs/Changelog',
+          label: 'Changelog',
+          position: 'right',
         },
         {
           href: 'https://github.com/DanielSepulveda/compiscript',
@@ -42,36 +48,6 @@ module.exports = {
             },
           ],
         },
-        // {
-        //   title: 'Community',
-        //   items: [
-        //     {
-        //       label: 'Stack Overflow',
-        //       href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-        //     },
-        //     {
-        //       label: 'Discord',
-        //       href: 'https://discordapp.com/invite/docusaurus',
-        //     },
-        //     {
-        //       label: 'Twitter',
-        //       href: 'https://twitter.com/docusaurus',
-        //     },
-        //   ],
-        // },
-        // {
-        //   title: 'More',
-        //   items: [
-        //     {
-        //       label: 'Blog',
-        //       to: 'blog',
-        //     },
-        //     {
-        //       label: 'GitHub',
-        //       href: 'https://github.com/facebook/docusaurus',
-        //     },
-        //   ],
-        // },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Daniel Sepulveda and Diego Partida. Built with Docusaurus.`,
     },
@@ -82,9 +58,6 @@ module.exports = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

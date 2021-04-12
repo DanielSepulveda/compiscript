@@ -1,0 +1,231 @@
+---
+title: Lexico
+---
+
+## Tabla de tokens
+
+<table>
+  <thead>
+    <tr>
+      <th>Token</th>
+      <th>Patrón</th>
+      <th>Ejemplo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>program</td>
+      <td>
+        <code>"Program"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>main</td>
+      <td>
+        <code>"main"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>vars</td>
+      <td>
+        <code>"vars"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>if</td>
+      <td>
+        <code>"if"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>else</td>
+      <td>
+        <code>"else"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>print</td>
+      <td>
+        <code>"print"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>function</td>
+      <td>
+        <code>"function"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>return</td>
+      <td>
+        <code>"return"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>while</td>
+      <td>
+        <code>"while"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>for</td>
+      <td>
+        <code>"for"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>until</td>
+      <td>
+        <code>"until"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>type</td>
+      <td>
+        <code>"type"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>void</td>
+      <td>
+        <code>"void"</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>keyword</td>
+      <td>
+        <code>
+          {' '}
+          program | main | vars | if | else | print | function | return | while
+          | for | until | type | void
+        </code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>char</td>
+      <td>
+        <code>*</code>
+      </td>
+      <td>h</td>
+    </tr>
+    <tr>
+      <td>stringChar</td>
+      <td>
+        <code>"\"" stringChar* "\""</code>
+      </td>
+      <td>y</td>
+    </tr>
+    <tr>
+      <td>decimalDigit</td>
+      <td>
+        <code>"0".."9"</code>
+      </td>
+      <td>"Hello world"</td>
+    </tr>
+    <tr>
+      <td>nonZeroDigit</td>
+      <td>
+        <code>"1".."9"</code>
+      </td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>integer</td>
+      <td>
+        <code>nonZeroDigit decimalDigit* | "0"</code>
+      </td>
+      <td>123</td>
+    </tr>
+    <tr>
+      <td>float</td>
+      <td>
+        <code>integer "." decimalDigit* | "." decimalDigit*</code>
+      </td>
+      <td>25.4</td>
+    </tr>
+    <tr>
+      <td>identifierStart</td>
+      <td>
+        <code>[A-Za-z] | “_”</code>
+      </td>
+      <td>f</td>
+    </tr>
+    <tr>
+      <td>identifierPart</td>
+      <td>
+        <code>identifierStart | decimalDigit</code>
+      </td>
+      <td>b</td>
+    </tr>
+    <tr>
+      <td>identifierName</td>
+      <td>
+        <code>identifierStart identifierPart*</code>
+      </td>
+      <td>foo</td>
+    </tr>
+    <tr>
+      <td>identifier</td>
+      <td>
+        <code>~keyword identifierName</code>
+      </td>
+      <td>_anIdentifier2</td>
+    </tr>
+    <tr>
+      <td>literal</td>
+      <td>
+        <code>string | integer | float</code>
+      </td>
+      <td>"literal", 123, .45</td>
+    </tr>
+    <tr>
+      <td>singleLineComment</td>
+      <td>
+        <code>"//" (~"\n" char)* &("\n" | end)</code>
+      </td>
+      <td>// single line comment</td>
+    </tr>
+    <tr>
+      <td>multiLineComment</td>
+      <td>
+        <code>"/*" (~"*/" char)* "*/"</code>
+      </td>
+      <td>/* multi line comment */</td>
+    </tr>
+    <tr>
+      <td>comment</td>
+      <td>
+        <code>singleLineComment | multiLineComment</code>
+      </td>
+      <td>// comment</td>
+    </tr>
+    <tr>
+      <td>space</td>
+      <td>
+        <code>( blank | tab | newline | comment)+</code>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>functionType</td>
+      <td>
+        <code>type | void</code>
+      </td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
