@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node ./src/server.ts",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "release": "standard-version"
   },
   "author": "Daniel Sepulveda",
   "license": "ISC",
@@ -17,7 +18,8 @@
     "figlet": "^1.5.0",
     "framer-motion": "^4",
     "ohm-js": "^15.4.1",
-    "ora": "^5.3.0"
+    "ora": "^5.3.0",
+    "standard-version": "^9.2.0"
   },
   "devDependencies": {
     "@types/figlet": "^1.2.1",
