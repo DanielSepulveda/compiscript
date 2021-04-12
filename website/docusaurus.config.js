@@ -25,6 +25,11 @@ module.exports = {
           position: 'left',
         },
         {
+          to: 'docs/Changelog',
+          label: 'Changelog',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/DanielSepulveda/compiscript',
           label: 'GitHub',
           position: 'right',
