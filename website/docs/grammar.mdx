@@ -1,0 +1,156 @@
+---
+title: Grammar
+---
+
+```
+Compiscript {
+/* -------------------------------------------------------------------------- */
+/*                                Starting Rule                               */
+/* -------------------------------------------------------------------------- */
+
+  Start = Program
+
+/* -------------------------------------------------------------------------- */
+/*                                Lexical Rules                               */
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------- Keywords -------------------------------- */
+
+  program = "Program"
+  main = "main"
+  vars = "vars"
+  if = "if"
+  else = "else"
+  print = "print"
+  function = "function"
+  return = "return"
+  read = "read"
+  while = "while"
+  for = "for"
+  until = "until"
+  type = "int" | "float" | "string"
+  void = "void"
+  keyword = program | vars | if       | print   | type
+            | else  | main | function | return  | read
+            | while | for  | until    | void
+
+/* -------------------------------- Patterns -------------------------------- */
+
+  char = any
+  stringChar = ~"\"" char
+  string = "\"" stringChar* "\""
+  decimalDigit = "0".."9"
+  nonZeroDigit = "1".."9"
+  integer (an integer) = nonZeroDigit decimalDigit* -- nonZero
+          | "0"                                     -- zero
+  float (a float) = integer "." decimalDigit* -- completeFloat
+          | "." decimalDigit*                 -- decimalFloat
+  identifierStart = letter | "_"
+  identifierPart = identifierStart | decimalDigit
+  identifierName = identifierStart identifierPart*
+  identifier (an identifier) = ~keyword identifierName
+
+  literal = string | integer | float
+
+  singleLineComment = "//" (~"\n" char)* &("\n" | end)
+  multiLineComment = "/*" (~"*/" char)* "*/"
+  comment = singleLineComment | multiLineComment
+
+  space += comment
+
+  functionType = type | void
+
+/* -------------------------------------------------------------------------- */
+/*                               Syntactic Rules                              */
+/* -------------------------------------------------------------------------- */
+
+/* ------------------------------- Expressions ------------------------------- */
+
+  ArrayExpression = identifier "[" Expression "]" ("[" Expression "]")?
+
+  CallExpression = identifier "(" Expression ")"
+
+  PrimaryExpression = ArrayExpression
+                    | CallExpression
+                    | identifier
+                    | literal
+                    | "(" Expression ")" -- parenExp
+
+  MultExpression = MultExpression "*" PrimaryExpression -- mult
+                  | MultExpression "/" PrimaryExpression -- div
+                  | PrimaryExpression
+
+  AddExpression = AddExpression "+" MultExpression -- add
+                  | AddExpression "-" MultExpression -- sub
+                  | MultExpression
+
+  RelExpression = RelExpression "<" AddExpression -- lt
+                  | RelExpression ">" AddExpression -- gt
+                  | RelExpression "<=" AddExpression -- ltqe
+                  | RelExpression ">=" AddExpression -- gteq
+                  | AddExpression
+
+  EqExpression = EqExpression "==" RelExpression -- equal
+                | EqExpression "!=" RelExpression -- notEqual
+                | RelExpression
+
+  AndExpression = AndExpression "and" EqExpression -- lAnd
+                | EqExpression
+
+  OrExpression = OrExpression "or" AndExpression -- lOr
+              | AndExpression
+
+  Expression = OrExpression
+
+  Dimension = "[" decimalDigit ("," decimalDigit)? "]"
+  VariableExpression = identifier Dimension?
+
+  AssignExpression = VariableExpression "=" Expression
+
+/* ------------------------------- Statements ------------------------------- */
+
+  VariableStatement = NonemptyListOf<VariableExpression, ","> ":" type ";"
+  VarDeclaration = "vars" VariableStatement+
+
+  Statement = AssigmentStatement
+            | CallStatement
+            | IfStatement
+            | IterationStatement
+            | ReadStatement
+            | PrintStatement
+            | ReturnStatement
+
+  Block = "{" Statement* "}"
+
+  AssigmentStatement = AssignExpression ";"
+
+  CallStatement = CallExpression ";"
+
+  IfStatement = if "(" Expression ")" Block (else Block)?
+
+  IterationStatement = while "(" Expression ")" Block               -- whileDo
+                      | for AssignExpression until Expression Block -- forDo
+
+  ReadStatement = read "(" NonemptyListOf<VariableExpression, ","> ")" ";"
+
+  PrintStatement = print "(" NonemptyListOf<Expression, ","> ")" ";"
+
+  ReturnStatement = return "(" Expression ")" ";"
+
+/* -------------------------------- Functions ------------------------------- */
+
+  FunctionParam = identifier ":" type
+  FunctionParams = ListOf<FunctionParam, ",">
+  FunctionDeclaration = functionType function identifier "(" FunctionParams ")"
+  FunctionStatement = FunctionDeclaration VarDeclaration? Block
+
+  MainStatement = main "(" ")" Block
+
+/* -------------------------------------------------------------------------- */
+/*                                   Program                                  */
+/* -------------------------------------------------------------------------- */
+
+  Program = program identifier ";" VarDeclaration? FunctionStatement* MainStatement
+}
+
+```
