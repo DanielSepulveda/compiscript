@@ -6,6 +6,6 @@ const grammarFile = fs
   .readFileSync(path.join(__dirname, 'grammar.ohm'))
   .toString();
 
-const csGrammar = ohm.grammar(grammarFile);
+const g = ohm.grammar(grammarFile);
 
-export default csGrammar;
+export default g;

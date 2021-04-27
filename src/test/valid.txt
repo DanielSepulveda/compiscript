@@ -6,6 +6,8 @@
 Program helloWorld;
 vars
   i, j, p: int;
+  v[3]: float;
+  m[3, 3]: int;
   name: string;
 
 int function fact (j: int)
