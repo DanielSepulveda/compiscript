@@ -79,7 +79,6 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     symbolTable.addFunc(funcName, funcType);
 
     functionParams.applySemantics();
-
     return;
   },
   FunctionStatement(functionDeclaration, varDeclaration, block) {
