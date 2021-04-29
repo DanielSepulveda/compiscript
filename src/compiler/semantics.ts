@@ -1,10 +1,25 @@
 import grammar from './grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
-import { Var } from '../utils/types';
+import { Var, Types } from '../utils/types';
 import { OPERATORS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {
+  string(_1, _2, _3) {
+    return { value: this.sourceString, type: 'string' };
+  },
+  integer_nonZero(_1, _2) {
+    return { value: this.sourceString, type: 'int' };
+  },
+  integer_zero(_1) {
+    return { value: this.sourceString, type: 'int' };
+  },
+  float_completeFloat(_1, _2, _3) {
+    return { value: this.sourceString, type: 'float' };
+  },
+  float_decimalFloat(_1, _2) {
+    return { value: this.sourceString, type: 'float' };
+  },
   identifier(_) {
     return this.sourceString;
   },
@@ -26,7 +41,10 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   PrimaryExpression_literal(literal) {
-    console.log('literal', literal.sourceString);
+    const l = literal.applySemantics() as { value: string; type: Types };
+
+    symbolTable.pushLiteralOperand(l.value, l.type);
+
     return;
   },
   PrimaryExpression_parenExp(_1, exp, _2) {
@@ -210,18 +228,19 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   },
   VariableExpression(identifier, dimension) {
     const name = identifier.applySemantics();
-
-    const isVarAlreadyDefined = symbolTable.checkIfVarIsDefined(name);
-    if (isVarAlreadyDefined) {
-      throw new Error(`Variable ${name} is already defined`);
-    }
-
     const dims = dimension.applySemantics();
+
     return { name, dims: dims.length ? dims[0] : null };
   },
   AssignExpression(variableExpression, _1, expression) {
     console.log('assign expression = ', expression.sourceString);
+    const v = variableExpression.applySemantics() as Omit<Var, 'type'>;
+
+    symbolTable.pushIdOperand(v.name);
+
     expression.applySemantics();
+
+    symbolTable.performAssign();
     return;
   },
 
@@ -234,6 +253,10 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     const varType = type.applySemantics();
 
     vars.forEach((v) => {
+      const isVarAlreadyDefined = symbolTable.checkIfVarIsDefined(v.name);
+      if (isVarAlreadyDefined) {
+        throw new Error(`Variable ${v.name} is already defined`);
+      }
       symbolTable.addVar(v.name, varType, v.dims);
     });
 

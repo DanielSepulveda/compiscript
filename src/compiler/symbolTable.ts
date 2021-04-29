@@ -149,6 +149,14 @@ export function getVar(name: string) {
 }
 
 /**
+ * Adds an operator to the operator stack
+ * @param op
+ */
+export function pushOperator(op: Operators) {
+  operatorStack.push(op);
+}
+
+/**
  * Adds a var to the operands stack if it exists, otherwise throws an error.
  * @param name
  */
@@ -159,12 +167,9 @@ export function pushIdOperand(name: string) {
   typeStack.push(operand.type);
 }
 
-/**
- * Adds an operator to the operator stack
- * @param op
- */
-export function pushOperator(op: Operators) {
-  operatorStack.push(op);
+export function pushLiteralOperand(name: string, type: Types) {
+  operandStack.push(name);
+  typeStack.push(type);
 }
 
 /**
@@ -210,7 +215,9 @@ export function performOperation() {
   const leftType = typeStack.pop();
 
   if (leftOperand === undefined || leftType === undefined) {
-    throw new Error('Undefined right operand');
+    throw new Error(
+      `Undefined left operand or type. Operand = ${leftOperand}, Type = ${leftType} `
+    );
   }
 
   const resType = getOperationResultType({
@@ -233,4 +240,40 @@ export function performOperation() {
   quadrupleArr.push(newQuadruple);
   operandStack.push(newTemp);
   typeStack.push(resType);
+}
+
+export function performAssign() {
+  const valueOperand = operandStack.pop();
+  const valueType = typeStack.pop();
+
+  if (valueOperand === undefined || valueType === undefined) {
+    throw new Error(
+      `Undefined value operand or type. Operand = ${valueOperand}, Type = ${valueType} `
+    );
+  }
+
+  const resOperand = operandStack.pop();
+  const resType = typeStack.pop();
+
+  if (resOperand === undefined || resType === undefined) {
+    throw new Error(
+      `Undefined res operand or type. Operand = ${resOperand}, Type = ${resType} `
+    );
+  }
+
+  if (valueType !== resType) {
+    throw new Error(
+      `Can't assign variable '${resOperand}' of type ${resType} value ${valueOperand} of type ${valueType}`
+    );
+  }
+
+  const newQuadruple: Quadruple = {
+    op: QUADRUPLE_OPERATIONS['='],
+    left: null,
+    right: valueOperand,
+    res: resOperand,
+  };
+
+  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
+  quadrupleArr.push(newQuadruple);
 }
