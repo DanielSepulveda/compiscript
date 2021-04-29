@@ -214,7 +214,6 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   Expression(orExpression) {
-    console.log('expression', orExpression.sourceString);
     orExpression.applySemantics();
     return;
   },
@@ -233,7 +232,6 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return { name, dims: dims.length ? dims[0] : null };
   },
   AssignExpression(variableExpression, _1, expression) {
-    console.log('assign expression = ', expression.sourceString);
     const v = variableExpression.applySemantics() as Omit<Var, 'type'>;
 
     symbolTable.pushIdOperand(v.name);
@@ -241,6 +239,13 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     expression.applySemantics();
 
     symbolTable.performAssign();
+    return;
+  },
+  PrintExpression(expression) {
+    expression.applySemantics();
+
+    symbolTable.performPrint();
+
     return;
   },
 
@@ -292,7 +297,8 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   ReadStatement(_1, _2, varExpressions, _3, _4) {
     return;
   },
-  PrintStatement(_1, _2, expressions, _3, _4) {
+  PrintStatement(_1, _2, printExpressions, _3, _4) {
+    printExpressions.asIteration().applySemantics();
     return;
   },
   ReturnStatement(_1, _2, expression, _3, _4) {
