@@ -63,12 +63,12 @@ Compiscript {
 
   ArrayExpression = identifier "[" Expression "]" ("[" Expression "]")?
 
-  CallExpression = identifier "(" Expression ")"
+  CallExpression = identifier "(" ListOf<Expression, ","> ")"
 
-  PrimaryExpression = ArrayExpression
-                    | CallExpression
-                    | identifier
-                    | literal
+  PrimaryExpression = ArrayExpression -- arrExp
+                    | CallExpression -- callExp
+                    | identifier -- id
+                    | literal -- literal
                     | "(" Expression ")" -- parenExp
   
   MultExpression = MultExpression "*" PrimaryExpression -- mult
@@ -81,7 +81,7 @@ Compiscript {
   
   RelExpression = RelExpression "<" AddExpression -- lt
                   | RelExpression ">" AddExpression -- gt
-                  | RelExpression "<=" AddExpression -- ltqe
+                  | RelExpression "<=" AddExpression -- lteq
                   | RelExpression ">=" AddExpression -- gteq
                   | AddExpression
   
