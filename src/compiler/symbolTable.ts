@@ -298,3 +298,17 @@ export function performPrint() {
   console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
   quadrupleArr.push(newQuadruple);
 }
+
+export function performRead(name: string) {
+  const v = getVar(name);
+
+  const newQuadruple: Quadruple = {
+    op: QUADRUPLE_OPERATIONS['read'],
+    left: null,
+    right: null,
+    res: v.name,
+  };
+
+  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
+  quadrupleArr.push(newQuadruple);
+}

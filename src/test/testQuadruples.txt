@@ -8,5 +8,6 @@ vars
 main ()
 {
   //iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
-  print("El resultado es", 1 + (iB * iC - fB) / (fC - fD));
+  //print("El resultado es", 1 + (iB * iC - fB) / (fC - fD));
+  read(iA);
 }

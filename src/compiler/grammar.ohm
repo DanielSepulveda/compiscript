@@ -104,6 +104,8 @@ Compiscript {
 
   PrintExpression = Expression
 
+  ReadExpression = VariableExpression
+
 /* ------------------------------- Statements ------------------------------- */
 
   VariableStatement = NonemptyListOf<VariableExpression, ","> ":" type ";"
@@ -128,7 +130,7 @@ Compiscript {
   IterationStatement = while "(" Expression ")" Block               -- whileDo
                       | for AssignExpression until Expression Block -- forDo
 
-  ReadStatement = read "(" NonemptyListOf<VariableExpression, ","> ")" ";"
+  ReadStatement = read "(" NonemptyListOf<ReadExpression, ","> ")" ";"
 
   PrintStatement = print "(" NonemptyListOf<PrintExpression, ","> ")" ";"
 
