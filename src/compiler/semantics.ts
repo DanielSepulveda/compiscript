@@ -2,20 +2,199 @@ import grammar from './grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
 import { Var } from '../utils/types';
+import { OPERATORS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {
-  Program(
-    _program,
-    identifier,
-    _semiColon,
-    varDeclaration,
-    functionStatement,
-    mainStatement
-  ) {
+  identifier(_) {
+    return this.sourceString;
+  },
+  _terminal() {
+    return this.primitiveValue;
+  },
+
+  /* -------------------------------------------------------------------------- */
+  /*                                 Expressions                                */
+  /* -------------------------------------------------------------------------- */
+
+  /* --------------------------- Primary expression --------------------------- */
+
+  PrimaryExpression_id(identifier) {
     const id = identifier.applySemantics();
-    symbolTable.addFunc(id, 'void', true);
-    varDeclaration.applySemantics();
-    functionStatement.applySemantics();
+    symbolTable.pushIdOperand(id);
+    return;
+  },
+  PrimaryExpression_literal(literal) {
+    console.log('literal', literal.sourceString);
+    return;
+  },
+  PrimaryExpression_callExp(callExpression) {
+    return;
+  },
+
+  /* ----------------------------- Mult expression ---------------------------- */
+
+  MultExpression(primaryExpression) {
+    primaryExpression.applySemantics();
+    return;
+  },
+  MultExpression_mult(multExpression, _, primaryExpression) {
+    multExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.MULT);
+
+    primaryExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  MultExpression_div(multExpression, _, primaryExpression) {
+    multExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.DIV);
+
+    primaryExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+
+  /* ----------------------------- Add expression ----------------------------- */
+
+  AddExpression(multExpression) {
+    multExpression.applySemantics();
+    return;
+  },
+  AddExpression_add(addExpression, _, multExpression) {
+    addExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.SUM);
+
+    multExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  AddExpression_sub(addExpression, _, multExpression) {
+    addExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.SUB);
+
+    multExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+
+  /* ----------------------------- Rel expression ----------------------------- */
+
+  RelExpression(addExpression) {
+    addExpression.applySemantics();
+    return;
+  },
+  RelExpression_lt(relExpression, _, addExpression) {
+    relExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.LT);
+
+    addExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  RelExpression_gt(relExpression, _, addExpression) {
+    relExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.GT);
+
+    addExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  RelExpression_lteq(relExpression, _, addExpression) {
+    relExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.LTEQ);
+
+    addExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  RelExpression_gteq(relExpression, _, addExpression) {
+    relExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.GTEQ);
+
+    addExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+
+  /* ------------------------------ Eq expression ----------------------------- */
+
+  EqExpression(relExpression) {
+    relExpression.applySemantics();
+    return;
+  },
+  EqExpression_equal(eqExpression, _, relExpression) {
+    eqExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.EQ);
+
+    relExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  EqExpression_notEqual(eqExpression, _, relExpression) {
+    eqExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.NEQ);
+
+    relExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+
+  /* ----------------------------- And Expression ----------------------------- */
+
+  AndExpression(eqExpression) {
+    eqExpression.applySemantics();
+    return;
+  },
+  AndExpression_lAnd(andExpression, _, eqExpression) {
+    andExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.AND);
+
+    eqExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+
+  /* ------------------------------ Or expression ----------------------------- */
+
+  OrExpression(andExpression) {
+    andExpression.applySemantics();
+    return;
+  },
+  OrExpression_lOr(orExpression, _, andExpression) {
+    orExpression.applySemantics();
+
+    symbolTable.pushOperator(OPERATORS.OR);
+
+    andExpression.applySemantics();
+
+    symbolTable.performOperation();
+    return;
+  },
+  Expression(orExpression) {
+    console.log('expression', orExpression.sourceString);
+    orExpression.applySemantics();
     return;
   },
   Dimension(_1, dim1, _2, dim2, _3) {
@@ -37,6 +216,15 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     const dims = dimension.applySemantics();
     return { name, dims: dims.length ? dims[0] : null };
   },
+  AssignExpression(variableExpression, _1, expression) {
+    expression.applySemantics();
+    return;
+  },
+
+  /* -------------------------------------------------------------------------- */
+  /*                                 Statements                                 */
+  /* -------------------------------------------------------------------------- */
+
   VariableStatement(varExprs, _1, type, _2) {
     const vars = varExprs.asIteration().applySemantics() as Omit<Var, 'type'>[];
     const varType = type.applySemantics();
@@ -50,6 +238,44 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   VarDeclaration(_1, variableStatments) {
     return variableStatments.applySemantics();
   },
+  Statement(statement) {
+    statement.applySemantics();
+    return;
+  },
+  Block(_1, statement, _2) {
+    statement.applySemantics();
+    return;
+  },
+  AssigmentStatement(assignExpression, _1) {
+    assignExpression.applySemantics();
+    return;
+  },
+  CallStatement(callExpression, _1) {
+    return;
+  },
+  IfStatement(_1, _2, expression, _3, block, _4, elseBlock) {
+    return;
+  },
+  IterationStatement_whileDo(_1, _2, expression, _3, block) {
+    return;
+  },
+  IterationStatement_forDo(_1, assignExpression, _2, expression, block) {
+    return;
+  },
+  ReadStatement(_1, _2, varExpressions, _3, _4) {
+    return;
+  },
+  PrintStatement(_1, _2, expressions, _3, _4) {
+    return;
+  },
+  ReturnStatement(_1, _2, expression, _3, _4) {
+    return;
+  },
+
+  /* -------------------------------------------------------------------------- */
+  /*                                  Functions                                 */
+  /* -------------------------------------------------------------------------- */
+
   FunctionParam(id, _1, paramType) {
     const name = id.applySemantics();
 
@@ -86,11 +312,29 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     varDeclaration.applySemantics();
     return;
   },
-  identifier(_) {
-    return this.sourceString;
+  MainStatement(_1, _2, _3, block) {
+    block.applySemantics();
+    return;
   },
-  _terminal() {
-    return this.primitiveValue;
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   Program                                  */
+  /* -------------------------------------------------------------------------- */
+
+  Program(
+    _program,
+    identifier,
+    _semiColon,
+    varDeclaration,
+    functionStatement,
+    mainStatement
+  ) {
+    const id = identifier.applySemantics();
+    symbolTable.addFunc(id, 'void', true);
+    varDeclaration.applySemantics();
+    functionStatement.applySemantics();
+    mainStatement.applySemantics();
+    return;
   },
 });
 
