@@ -17,7 +17,9 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   /* -------------------------------------------------------------------------- */
 
   /* --------------------------- Primary expression --------------------------- */
-
+  PrimaryExpression_callExp(callExpression) {
+    return;
+  },
   PrimaryExpression_id(identifier) {
     const id = identifier.applySemantics();
     symbolTable.pushIdOperand(id);
@@ -27,7 +29,8 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     console.log('literal', literal.sourceString);
     return;
   },
-  PrimaryExpression_callExp(callExpression) {
+  PrimaryExpression_parenExp(_1, exp, _2) {
+    exp.applySemantics();
     return;
   },
 
@@ -217,6 +220,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return { name, dims: dims.length ? dims[0] : null };
   },
   AssignExpression(variableExpression, _1, expression) {
+    console.log('assign expression = ', expression.sourceString);
     expression.applySemantics();
     return;
   },

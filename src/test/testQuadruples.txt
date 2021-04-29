@@ -7,5 +7,5 @@ vars
 // funcion principal
 main ()
 {
-  iA = iA * iB + iC * fA - iA;
+  iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
 }
