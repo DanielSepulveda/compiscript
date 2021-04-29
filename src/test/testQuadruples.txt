@@ -7,6 +7,6 @@ vars
 // funcion principal
 main ()
 {
-  iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
-  fA = 1 + (iB * iC - fB) / (fC - fD);
+  //iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
+  print("El resultado es", 1 + (iB * iC - fB) / (fC - fD));
 }

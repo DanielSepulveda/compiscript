@@ -277,3 +277,24 @@ export function performAssign() {
   console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
   quadrupleArr.push(newQuadruple);
 }
+
+export function performPrint() {
+  const valueOperand = operandStack.pop();
+  const valueType = typeStack.pop();
+
+  if (valueOperand === undefined || valueType === undefined) {
+    throw new Error(
+      `Undefined value operand or type. Operand = ${valueOperand}, Type = ${valueType} `
+    );
+  }
+
+  const newQuadruple: Quadruple = {
+    op: QUADRUPLE_OPERATIONS['print'],
+    left: null,
+    right: null,
+    res: valueOperand,
+  };
+
+  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
+  quadrupleArr.push(newQuadruple);
+}

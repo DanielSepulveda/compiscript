@@ -102,6 +102,8 @@ Compiscript {
 
   AssignExpression = VariableExpression "=" Expression
 
+  PrintExpression = Expression
+
 /* ------------------------------- Statements ------------------------------- */
 
   VariableStatement = NonemptyListOf<VariableExpression, ","> ":" type ";"
@@ -128,7 +130,7 @@ Compiscript {
 
   ReadStatement = read "(" NonemptyListOf<VariableExpression, ","> ")" ";"
 
-  PrintStatement = print "(" NonemptyListOf<Expression, ","> ")" ";"
+  PrintStatement = print "(" NonemptyListOf<PrintExpression, ","> ")" ";"
 
   ReturnStatement = return "(" Expression ")" ";"
 
