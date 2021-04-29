@@ -38,8 +38,8 @@ export type Func = {
 
 export type Quadruple = {
   op: QuadrupleOperationsLabels;
-  left: string;
-  right: string;
+  left: string | null;
+  right: string | null;
   res: string;
 };
 
