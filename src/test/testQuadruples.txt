@@ -1,0 +1,13 @@
+Program helloWorld;
+vars
+  iA, iB, iC, iD: int;
+  fA, fB, fC, fD: float;
+  sA, sB, sC, sD: string;
+
+// funcion principal
+main ()
+{
+  //iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
+  //print("El resultado es", 1 + (iB * iC - fB) / (fC - fD));
+  read(iA);
+}

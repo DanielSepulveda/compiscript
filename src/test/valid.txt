@@ -10,7 +10,7 @@ vars
   m[3, 3]: int;
   name: string;
 
-int function fact (j: int)
+int function fact (j: int, z: int)
 vars
   i: int;
 {
@@ -18,7 +18,7 @@ vars
   if (j == 1) {
     return (j);
   } else {
-    return (j * fact(j-1));
+    return (j * fact(j-1, 1));
   }
 }
 
@@ -37,6 +37,10 @@ vars
 // funcion principal
 main ()
 {
+  j = p * 2;
+}
+
+/*
   read(p);
   j = p * 2;
   i = fact(p);
@@ -44,4 +48,4 @@ main ()
   for i = 1 until 10 {
     print("Hello World");
   }
-}
+*/

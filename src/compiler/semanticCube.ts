@@ -1,4 +1,9 @@
-import { Types, Operators, OperandResultTypes } from '../utils/types';
+import {
+  Types,
+  Operators,
+  OperandResultTypes,
+  OperationExpression,
+} from '../utils/types';
 
 /* -------------------------------------------------------------------------- */
 /*                                Dictionaries                                */
@@ -11,25 +16,25 @@ type OperatorDict = Record<Types, Record<Types, OperandResultTypes>>;
 const plusDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'double',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
-  double: {
-    int: 'double',
-    double: 'double',
+  float: {
+    int: 'float',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'string',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -40,25 +45,25 @@ const plusDict: OperatorDict = {
 const minusDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'double',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
-  double: {
-    int: 'double',
-    double: 'double',
+  float: {
+    int: 'float',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -69,25 +74,25 @@ const minusDict: OperatorDict = {
 const multDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'double',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
-  double: {
-    int: 'double',
-    double: 'double',
+  float: {
+    int: 'float',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -98,25 +103,25 @@ const multDict: OperatorDict = {
 const divDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'double',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
-  double: {
-    int: 'double',
-    double: 'double',
+  float: {
+    int: 'float',
+    float: 'float',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -127,25 +132,25 @@ const divDict: OperatorDict = {
 const gtDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
-  double: {
+  float: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -156,25 +161,25 @@ const gtDict: OperatorDict = {
 const ltDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
-  double: {
+  float: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -185,25 +190,25 @@ const ltDict: OperatorDict = {
 const gtEqDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
-  double: {
+  float: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -214,25 +219,25 @@ const gtEqDict: OperatorDict = {
 const ltEqDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
-  double: {
+  float: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -243,25 +248,25 @@ const ltEqDict: OperatorDict = {
 const eqDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
-  double: {
+  float: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'int',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -272,25 +277,83 @@ const eqDict: OperatorDict = {
 const nEqDict: OperatorDict = {
   int: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
-  double: {
+  float: {
     int: 'int',
-    double: 'int',
+    float: 'int',
     string: 'error',
     void: 'error',
   },
   string: {
     int: 'error',
-    double: 'error',
+    float: 'error',
     string: 'int',
     void: 'error',
   },
   void: {
     int: 'error',
-    double: 'error',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+};
+
+/* ----------------------------------- And ---------------------------------- */
+
+const andDict: OperatorDict = {
+  int: {
+    int: 'int',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+  float: {
+    int: 'error',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+  string: {
+    int: 'error',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+  void: {
+    int: 'error',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+};
+
+/* ----------------------------------- Or ----------------------------------- */
+
+const orDict: OperatorDict = {
+  int: {
+    int: 'int',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+  float: {
+    int: 'error',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+  string: {
+    int: 'error',
+    float: 'error',
+    string: 'error',
+    void: 'error',
+  },
+  void: {
+    int: 'error',
+    float: 'error',
     string: 'error',
     void: 'error',
   },
@@ -316,24 +379,12 @@ export const semanticCube: SemanticCube = {
   '<=': ltEqDict,
   '==': eqDict,
   '!=': nEqDict,
+  and: andDict,
+  or: orDict,
 };
 
-type Expression = {
-  left: Types;
-  right: Types;
-  op: Operators;
-};
-
-const getSemanticCubeType = (exp: Expression) => {
+export function getOperationResultType(exp: OperationExpression) {
   const res = semanticCube[exp.op][exp.left][exp.right];
 
-  if (res === 'error') {
-    throw new Error(
-      `Invalid use of operator ${exp.op} for the given types ${exp.left} and ${exp.right}`
-    );
-  }
-
   return res;
-};
-
-export default getSemanticCubeType;
+}

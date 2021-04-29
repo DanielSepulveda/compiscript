@@ -63,12 +63,12 @@ Compiscript {
 
   ArrayExpression = identifier "[" Expression "]" ("[" Expression "]")?
 
-  CallExpression = identifier "(" Expression ")"
+  CallExpression = identifier "(" ListOf<Expression, ","> ")"
 
-  PrimaryExpression = ArrayExpression
-                    | CallExpression
-                    | identifier
-                    | literal
+  PrimaryExpression = ArrayExpression -- arrExp
+                    | CallExpression -- callExp
+                    | identifier -- id
+                    | literal -- literal
                     | "(" Expression ")" -- parenExp
   
   MultExpression = MultExpression "*" PrimaryExpression -- mult
@@ -81,7 +81,7 @@ Compiscript {
   
   RelExpression = RelExpression "<" AddExpression -- lt
                   | RelExpression ">" AddExpression -- gt
-                  | RelExpression "<=" AddExpression -- ltqe
+                  | RelExpression "<=" AddExpression -- lteq
                   | RelExpression ">=" AddExpression -- gteq
                   | AddExpression
   
@@ -101,6 +101,10 @@ Compiscript {
   VariableExpression = identifier Dimension?
 
   AssignExpression = VariableExpression "=" Expression
+
+  PrintExpression = Expression
+
+  ReadExpression = VariableExpression
 
 /* ------------------------------- Statements ------------------------------- */
 
@@ -126,9 +130,9 @@ Compiscript {
   IterationStatement = while "(" Expression ")" Block               -- whileDo
                       | for AssignExpression until Expression Block -- forDo
 
-  ReadStatement = read "(" NonemptyListOf<VariableExpression, ","> ")" ";"
+  ReadStatement = read "(" NonemptyListOf<ReadExpression, ","> ")" ";"
 
-  PrintStatement = print "(" NonemptyListOf<Expression, ","> ")" ";"
+  PrintStatement = print "(" NonemptyListOf<PrintExpression, ","> ")" ";"
 
   ReturnStatement = return "(" Expression ")" ";"
 
