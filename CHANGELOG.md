@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/DanielSepulveda/compiscript/compare/v2.0.0...v3.0.0) (2021-04-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* bump to new version (#7)
+
+### Features
+
+* bump to new version ([#7](https://github.com/DanielSepulveda/compiscript/issues/7)) ([38f424c](https://github.com/DanielSepulveda/compiscript/commit/38f424c12d67be633dae1e02a7100dcf6d12158d))
+* **quadruplets:** basic quadruplets generation for simple expressions ([8dfb68d](https://github.com/DanielSepulveda/compiscript/commit/8dfb68d31d4d4b6ee6f2979ee9f02618293b8daa))
+* **quadruplets:** generate assigment expresions quadruplets ([68ddc16](https://github.com/DanielSepulveda/compiscript/commit/68ddc168e4086a2907e8f9ff1aed3c8928548d1e))
+* **quadruplets:** generate parenthesis expresions quadruplets ([2ae8602](https://github.com/DanielSepulveda/compiscript/commit/2ae860295424b1b07e28ac077fc7f8e7a18ca3d5))
+* **quadruplets:** generate print  expresions quadruplets ([e5921f5](https://github.com/DanielSepulveda/compiscript/commit/e5921f5821ea412d4756c2a54d54825ff34d367a))
+* **quadruplets:** generate read expresions quadruplets ([15d47a3](https://github.com/DanielSepulveda/compiscript/commit/15d47a3600484bf38f3f8fca88f961c363b11271))
+* **semantics:** semantic cube first version ([#5](https://github.com/DanielSepulveda/compiscript/issues/5)) ([c075bf3](https://github.com/DanielSepulveda/compiscript/commit/c075bf353841a7c7ad95592ddbcf3074c12f6ee4))
+
 ## 2.0.0 (2021-04-27)
 
 
