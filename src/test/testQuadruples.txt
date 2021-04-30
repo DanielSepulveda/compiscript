@@ -4,7 +4,6 @@ vars
   fA, fB, fC, fD: float;
   sA, sB, sC, sD: string;
 
-// funcion principal
 main ()
 {
   //iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
