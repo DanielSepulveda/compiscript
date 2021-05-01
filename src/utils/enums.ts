@@ -35,4 +35,7 @@ export const extraOperatorsLabels = [
   'READ',
   'PRINT',
   'RETURN',
+  'GOTO',
+  'GOTOT',
+  'GOTOF',
 ] as const;

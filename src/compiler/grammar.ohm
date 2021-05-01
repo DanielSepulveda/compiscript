@@ -125,7 +125,8 @@ Compiscript {
 
   CallStatement = CallExpression ";"
 
-  IfStatement = if "(" Expression ")" Block (else Block)?
+  IfElseStatement = else Block
+  IfStatement = if "(" Expression ")" Block IfElseStatement?
 
   IterationStatement = while "(" Expression ")" Block               -- whileDo
                       | for AssignExpression until Expression Block -- forDo

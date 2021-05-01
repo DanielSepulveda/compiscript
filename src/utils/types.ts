@@ -37,10 +37,11 @@ export type Func = {
 };
 
 export type Quadruple = {
+  count: number;
   op: QuadrupleOperationsLabels;
   left: string | null;
   right: string | null;
-  res: string;
+  res: string | null;
 };
 
 export type OperationExpression = {
