@@ -297,7 +297,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   IfStatement(_1, _2, expression, _3, block, elseBlock) {
     expression.applySemantics();
 
-    symbolTable.handleIf();
+    symbolTable.handleCondition();
 
     block.applySemantics();
     elseBlock.applySemantics();
@@ -306,6 +306,11 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   IterationStatement_whileDo(_1, _2, expression, _3, block) {
+    symbolTable.handleWhileStart();
+    expression.applySemantics();
+    symbolTable.handleCondition();
+    block.applySemantics();
+    symbolTable.handleWhileEnd();
     return;
   },
   IterationStatement_forDo(_1, assignExpression, _2, expression, block) {
