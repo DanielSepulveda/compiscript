@@ -28,16 +28,19 @@ let currentFunc: Func = globalFunc;
 const operatorStack = new Stack<Operators>();
 const operandStack = new Stack<string>();
 const typeStack = new Stack<Types>();
+const jumpsStack = new Stack<number>();
 
 const stacks = {
   operatorStack,
   operandStack,
   typeStack,
+  jumpsStack,
 };
 
 const quadrupleArr: Quadruple[] = [];
 
-let temp_count = 0;
+let tempCount = 0;
+let quadCount = 0;
 
 export const internal = {
   funcDir,
@@ -45,12 +48,24 @@ export const internal = {
   currentFunc,
   stacks,
   quadrupleArr,
-  temp_count,
+  tempCount,
 };
 
 /* -------------------------------------------------------------------------- */
 /*                                   Methods                                  */
 /* -------------------------------------------------------------------------- */
+
+function safePop<T>(stack: Stack<T>) {
+  const val = stack.pop();
+
+  if (!val) {
+    throw new Error(
+      `Internal error: Tried to perform 'pop' on a stack and got no value`
+    );
+  }
+
+  return val;
+}
 
 /**
  * Adds a new function
@@ -192,6 +207,15 @@ export function getOperationResultType(exp: OperationExpression) {
   return res;
 }
 
+function addQuadruple(newQuad: Omit<Quadruple, 'count'>) {
+  const newQuadruple: Quadruple = {
+    ...newQuad,
+    count: quadCount++,
+  };
+
+  quadrupleArr.push(newQuadruple);
+}
+
 /**
  * Performs an arithmetic operation and generates a new quadruple
  */
@@ -202,23 +226,11 @@ export function performOperation() {
     throw new Error('Undefined operator');
   }
 
-  const rightOperand = operandStack.pop();
-  const rightType = typeStack.pop();
+  const rightOperand = safePop(operandStack);
+  const rightType = safePop(typeStack);
 
-  if (rightOperand === undefined || rightType === undefined) {
-    throw new Error(
-      `Undefined right operand or type. Operand = ${rightOperand}, Type = ${rightType} `
-    );
-  }
-
-  const leftOperand = operandStack.pop();
-  const leftType = typeStack.pop();
-
-  if (leftOperand === undefined || leftType === undefined) {
-    throw new Error(
-      `Undefined left operand or type. Operand = ${leftOperand}, Type = ${leftType} `
-    );
-  }
+  const leftOperand = safePop(operandStack);
+  const leftType = safePop(typeStack);
 
   const resType = getOperationResultType({
     left: leftType,
@@ -226,40 +238,25 @@ export function performOperation() {
     op: operator,
   });
 
-  const newTemp = `t${++temp_count}`;
+  const newTemp = `t${++tempCount}`;
 
-  const newQuadruple: Quadruple = {
+  addQuadruple({
     op: QUADRUPLE_OPERATIONS[operator],
     left: leftOperand,
     right: rightOperand,
     res: newTemp,
-  };
+  });
 
-  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
-
-  quadrupleArr.push(newQuadruple);
   operandStack.push(newTemp);
   typeStack.push(resType);
 }
 
 export function performAssign() {
-  const valueOperand = operandStack.pop();
-  const valueType = typeStack.pop();
+  const valueOperand = safePop(operandStack);
+  const valueType = safePop(typeStack);
 
-  if (valueOperand === undefined || valueType === undefined) {
-    throw new Error(
-      `Undefined value operand or type. Operand = ${valueOperand}, Type = ${valueType} `
-    );
-  }
-
-  const resOperand = operandStack.pop();
-  const resType = typeStack.pop();
-
-  if (resOperand === undefined || resType === undefined) {
-    throw new Error(
-      `Undefined res operand or type. Operand = ${resOperand}, Type = ${resType} `
-    );
-  }
+  const resOperand = safePop(operandStack);
+  const resType = safePop(typeStack);
 
   if (valueType !== resType) {
     throw new Error(
@@ -267,48 +264,80 @@ export function performAssign() {
     );
   }
 
-  const newQuadruple: Quadruple = {
+  addQuadruple({
     op: QUADRUPLE_OPERATIONS['='],
     left: null,
     right: valueOperand,
     res: resOperand,
-  };
-
-  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
-  quadrupleArr.push(newQuadruple);
+  });
 }
 
 export function performPrint() {
-  const valueOperand = operandStack.pop();
-  const valueType = typeStack.pop();
+  const valueOperand = safePop(operandStack);
 
-  if (valueOperand === undefined || valueType === undefined) {
-    throw new Error(
-      `Undefined value operand or type. Operand = ${valueOperand}, Type = ${valueType} `
-    );
-  }
-
-  const newQuadruple: Quadruple = {
+  addQuadruple({
     op: QUADRUPLE_OPERATIONS['print'],
     left: null,
     right: null,
     res: valueOperand,
-  };
-
-  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
-  quadrupleArr.push(newQuadruple);
+  });
 }
 
 export function performRead(name: string) {
   const v = getVar(name);
 
-  const newQuadruple: Quadruple = {
+  addQuadruple({
     op: QUADRUPLE_OPERATIONS['read'],
     left: null,
     right: null,
     res: v.name,
-  };
+  });
+}
 
-  console.log(`${quadrupleArr.length + 1}: ${jsonStringify(newQuadruple)}`);
-  quadrupleArr.push(newQuadruple);
+export function validateConditionExpression() {
+  const condType = typeStack.pop();
+
+  if (!condType || condType !== 'int') {
+    console.log(
+      `Invalid conditional expression type. Expected type 'int' but got '${condType}'`
+    );
+  }
+}
+
+function fillQuadruple(quad: number, value: string) {
+  const quadToFill = quadrupleArr[quad];
+  quadToFill.res = value;
+  quadrupleArr[quad] = quadToFill;
+}
+
+export function handleIf() {
+  validateConditionExpression();
+
+  const condRes = safePop(operandStack);
+
+  addQuadruple({
+    op: 'GOTOF',
+    left: condRes,
+    right: null,
+    res: null,
+  });
+
+  jumpsStack.push(quadCount - 1);
+}
+
+export function handleIfElse() {
+  const jumpFalse = safePop(jumpsStack);
+  addQuadruple({
+    op: 'GOTO',
+    left: null,
+    right: null,
+    res: null,
+  });
+  jumpsStack.push(quadCount - 1);
+  fillQuadruple(jumpFalse, String(quadCount));
+}
+
+export function handleIfEnd() {
+  const end = safePop(jumpsStack);
+  fillQuadruple(end, String(quadCount));
 }
