@@ -58,7 +58,7 @@ export const internal = {
 function safePop<T>(stack: Stack<T>) {
   const val = stack.pop();
 
-  if (!val) {
+  if (val === undefined) {
     throw new Error(
       `Internal error: Tried to perform 'pop' on a stack and got no value`
     );
@@ -310,7 +310,7 @@ function fillQuadruple(quad: number, value: string) {
   quadrupleArr[quad] = quadToFill;
 }
 
-export function handleIf() {
+export function handleCondition() {
   validateConditionExpression();
 
   const condRes = safePop(operandStack);
@@ -340,4 +340,22 @@ export function handleIfElse() {
 export function handleIfEnd() {
   const end = safePop(jumpsStack);
   fillQuadruple(end, String(quadCount));
+}
+
+export function handleWhileStart() {
+  jumpsStack.push(quadCount);
+}
+
+export function handleWhileEnd() {
+  const jumpFalse = safePop(jumpsStack);
+  const jumpBegin = safePop(jumpsStack);
+
+  addQuadruple({
+    op: 'GOTO',
+    left: null,
+    right: null,
+    res: String(jumpBegin),
+  });
+
+  fillQuadruple(jumpFalse, String(quadCount));
 }
