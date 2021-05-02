@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0](https://github.com/DanielSepulveda/compiscript/compare/v3.0.0...v4.0.0) (2021-05-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* bump version (#9)
+
+### Features
+
+* bump version ([#9](https://github.com/DanielSepulveda/compiscript/issues/9)) ([7aec50b](https://github.com/DanielSepulveda/compiscript/commit/7aec50b5db2757666b5ef73d0cb4e8e874ad4fa9))
+* **for:** generate quadruples for 'for' statements ([1424f22](https://github.com/DanielSepulveda/compiscript/commit/1424f2210a74b2daf557306fe815401e516dc767))
+* **ifs:** generate quadruples for if statements ([2991152](https://github.com/DanielSepulveda/compiscript/commit/2991152069c4055d5e372fd0bc310097d99c0dc8))
+* **while:** generate quadruples for while statements ([a3a3d25](https://github.com/DanielSepulveda/compiscript/commit/a3a3d25f6a8ef659f32d35aea0e39d63d57d49c1))
+
 ## [3.0.0](https://github.com/DanielSepulveda/compiscript/compare/v2.0.0...v3.0.0) (2021-04-30)
 
 
