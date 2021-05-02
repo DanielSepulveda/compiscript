@@ -16,9 +16,13 @@ main ()
     iA = iD - iC;
   } */
 
-  while (iA > iB * iC) {
+  /* while (iA > iB * iC) {
     iA = iA - iD;
     print(iA);
+  } */
+
+  for (iA = 1) until (1 + (iB * iC - iD) / (iC - iD)) {
+    iA = iA + 1;
   }
 
   iB = 0;

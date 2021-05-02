@@ -49,13 +49,14 @@ export const internal = {
   stacks,
   quadrupleArr,
   tempCount,
+  quadCount,
 };
 
 /* -------------------------------------------------------------------------- */
 /*                                   Methods                                  */
 /* -------------------------------------------------------------------------- */
 
-function safePop<T>(stack: Stack<T>) {
+export function safePop<T>(stack: Stack<T>) {
   const val = stack.pop();
 
   if (val === undefined) {
@@ -163,6 +164,10 @@ export function getVar(name: string) {
   return globalFunc.vars[name];
 }
 
+export function getNewTemp() {
+  return `t${++tempCount}`;
+}
+
 /**
  * Adds an operator to the operator stack
  * @param op
@@ -207,7 +212,7 @@ export function getOperationResultType(exp: OperationExpression) {
   return res;
 }
 
-function addQuadruple(newQuad: Omit<Quadruple, 'count'>) {
+export function addQuadruple(newQuad: Omit<Quadruple, 'count'>) {
   const newQuadruple: Quadruple = {
     ...newQuad,
     count: quadCount++,
@@ -238,7 +243,7 @@ export function performOperation() {
     op: operator,
   });
 
-  const newTemp = `t${++tempCount}`;
+  const newTemp = getNewTemp();
 
   addQuadruple({
     op: QUADRUPLE_OPERATIONS[operator],
@@ -304,7 +309,7 @@ export function validateConditionExpression() {
   }
 }
 
-function fillQuadruple(quad: number, value: string) {
+export function fillQuadruple(quad: number, value: string) {
   const quadToFill = quadrupleArr[quad];
   quadToFill.res = value;
   quadrupleArr[quad] = quadToFill;
@@ -342,11 +347,93 @@ export function handleIfEnd() {
   fillQuadruple(end, String(quadCount));
 }
 
-export function handleWhileStart() {
+export function handleLoopStart() {
   jumpsStack.push(quadCount);
 }
 
-export function handleWhileEnd() {
+export function handleLoopEnd() {
+  const jumpFalse = safePop(jumpsStack);
+  const jumpBegin = safePop(jumpsStack);
+
+  addQuadruple({
+    op: 'GOTO',
+    left: null,
+    right: null,
+    res: String(jumpBegin),
+  });
+
+  fillQuadruple(jumpFalse, String(quadCount));
+}
+
+export function handleForAssign() {
+  const initialValueOperand = safePop(operandStack);
+  const initialValueType = safePop(typeStack);
+
+  if (initialValueType !== 'int') {
+    throw new Error(
+      `For statement expects an assigment of type 'int' but got type ${initialValueType}`
+    );
+  }
+
+  const iteratorOperand = safePop(operandStack);
+  const iteratorType = safePop(typeStack);
+
+  if (initialValueType !== iteratorType) {
+    throw new Error(
+      `Can't assign variable '${iteratorOperand}' of type ${iteratorType} value ${initialValueOperand} of type ${initialValueType}`
+    );
+  }
+
+  addQuadruple({
+    op: QUADRUPLE_OPERATIONS['='],
+    left: null,
+    right: initialValueOperand,
+    res: iteratorOperand,
+  });
+
+  jumpsStack.push(quadCount);
+
+  return iteratorOperand;
+}
+
+export function handleForCompare(iteratorVarName: string) {
+  const expressionOperand = safePop(operandStack);
+  const expressionType = safePop(typeStack);
+
+  if (expressionType !== 'int') {
+    throw new Error(
+      `For statement expects an iterable of type 'int' but got type ${expressionType}`
+    );
+  }
+
+  const iteratorVar = getVar(iteratorVarName);
+
+  if (expressionType !== iteratorVar.type) {
+    throw new Error(
+      `Can't assign variable '${iteratorVar.name}' of type ${iteratorVar.type} value ${expressionOperand} of type ${expressionType}`
+    );
+  }
+
+  const newTemp = getNewTemp();
+
+  addQuadruple({
+    op: QUADRUPLE_OPERATIONS['<='],
+    left: iteratorVar.name,
+    right: expressionOperand,
+    res: newTemp,
+  });
+
+  addQuadruple({
+    op: 'GOTOF',
+    left: newTemp,
+    right: null,
+    res: null,
+  });
+
+  jumpsStack.push(quadCount - 1);
+}
+
+export function handleForEnd() {
   const jumpFalse = safePop(jumpsStack);
   const jumpBegin = safePop(jumpsStack);
 

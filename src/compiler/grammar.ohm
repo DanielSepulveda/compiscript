@@ -129,7 +129,7 @@ Compiscript {
   IfStatement = if "(" Expression ")" Block IfElseStatement?
 
   IterationStatement = while "(" Expression ")" Block               -- whileDo
-                      | for AssignExpression until Expression Block -- forDo
+                      | for "(" AssignExpression ")" until "(" Expression ")" Block -- forDo
 
   ReadStatement = read "(" NonemptyListOf<ReadExpression, ","> ")" ";"
 

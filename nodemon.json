@@ -1,6 +1,6 @@
 {
   "watch": ["src/"],
-  "ignore": ["node_modules/"],
+  "ignore": ["node_modules/", "./src/compiler/quadruples.out.txt"],
   "exec": "ts-node ./src/server.ts",
   "ext": "json,ts,txt,ohm"
 }
