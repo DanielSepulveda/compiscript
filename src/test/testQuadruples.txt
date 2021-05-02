@@ -14,7 +14,7 @@ main ()
     iA = iB + iD;
   } else {
     iA = iD - iC;
-  } */
+  }  */
 
   /* while (iA > iB * iC) {
     iA = iA - iD;
