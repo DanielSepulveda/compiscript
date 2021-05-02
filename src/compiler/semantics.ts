@@ -2,7 +2,7 @@ import grammar from './grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
 import { Var, Types } from '../utils/types';
-import { OPERATORS } from '../utils/constants';
+import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {
   string(_1, _2, _3) {
@@ -238,7 +238,6 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
 
     expression.applySemantics();
 
-    symbolTable.performAssign();
     return;
   },
   PrintExpression(expression) {
@@ -285,6 +284,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   },
   AssigmentStatement(assignExpression, _1) {
     assignExpression.applySemantics();
+    symbolTable.performAssign();
     return;
   },
   CallStatement(callExpression, _1) {
@@ -306,14 +306,36 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   IterationStatement_whileDo(_1, _2, expression, _3, block) {
-    symbolTable.handleWhileStart();
+    symbolTable.handleLoopStart();
     expression.applySemantics();
     symbolTable.handleCondition();
     block.applySemantics();
-    symbolTable.handleWhileEnd();
+    symbolTable.handleLoopEnd();
     return;
   },
-  IterationStatement_forDo(_1, assignExpression, _2, expression, block) {
+  IterationStatement_forDo(
+    _1,
+    _2,
+    assignExpression,
+    _3,
+    _4,
+    _5,
+    expression,
+    _6,
+    block
+  ) {
+    assignExpression.applySemantics();
+
+    const iteratorOperand = symbolTable.handleForAssign();
+
+    expression.applySemantics();
+
+    symbolTable.handleForCompare(iteratorOperand);
+
+    block.applySemantics();
+
+    symbolTable.handleForEnd();
+
     return;
   },
   ReadStatement(_1, _2, readExpressions, _3, _4) {
