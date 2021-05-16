@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0](https://github.com/DanielSepulveda/compiscript/compare/v4.0.0...v5.0.0) (2021-05-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **functions:** generate intermediate code for functions and handle compilation memory (#10)
+
+### Features
+
+* **functions:** generate intermediate code for functions and handle compilation memory ([#10](https://github.com/DanielSepulveda/compiscript/issues/10)) ([8c6e55b](https://github.com/DanielSepulveda/compiscript/commit/8c6e55bdcf5b56465b66ba1c1d5f19c5a0b1ae71))
+
 ## [4.0.0](https://github.com/DanielSepulveda/compiscript/compare/v3.0.0...v4.0.0) (2021-05-02)
 
 
