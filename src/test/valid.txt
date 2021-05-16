@@ -15,18 +15,18 @@ vars
   i: int;
 {
   i = j + (p - j*2 + j);
-  if (j == 1) {
+  /*if (j == 1) {
     return (j);
   } else {
     return (j * fact(j-1, 1));
-  }
+  }*/
 }
 
 void function pelos (y: int)
 vars
   x: int;
 {
-  read(name);
+  // read(name);
   x = y;
   while (x < y) {
     print(name, x);
@@ -38,6 +38,7 @@ vars
 main ()
 {
   j = p * 2;
+  pelos(p);
 }
 
 /*
