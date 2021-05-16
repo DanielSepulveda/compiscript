@@ -38,4 +38,36 @@ export const extraOperatorsLabels = [
   'GOTO',
   'GOTOT',
   'GOTOF',
+  'ENDFUNC',
+  'ERA',
+  'PARAMETER',
+  'GOSUB',
+  'END',
+] as const;
+
+export const globalMemoryPointers = [
+  'globalInt',
+  'globalFloat',
+  'globalString',
+] as const;
+
+export const localMemoryPointers = [
+  'localInt',
+  'localIntTemporal',
+  'localFloat',
+  'localFloatTemporal',
+  'localString',
+  'localStringTemporal',
+] as const;
+
+export const constantMemoryPointers = [
+  'constantInt',
+  'constantFloat',
+  'constantString',
+] as const;
+
+export const memoryPointers = [
+  ...globalMemoryPointers,
+  ...localMemoryPointers,
+  ...constantMemoryPointers,
 ] as const;

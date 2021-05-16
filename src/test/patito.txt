@@ -1,0 +1,38 @@
+Program patito;
+vars
+  i, j, k: int;
+  f: float;
+
+void function uno(a: int, b: int)
+{
+  if (a > 0) {
+    i = a + b * j + i;
+    print(i + j);
+  } else {
+    print(a + b);
+  }
+}
+
+int function dos(a: int, g: float)
+vars
+  i: int;
+{
+  i = a;
+  while(a > 0) {
+    a = a - k * j;
+    uno(a * 2, a + k);
+    g = g * j - k;
+  }
+  return(i + k * j);
+}
+
+main ()
+{
+  i = 2;
+  k = i + 1;
+  while(i > 0) {
+    print(dos(i + k, f * 3) + 3);
+    print(i, j * 2, f * 2 + 1.5);
+    i = i - k / 2;
+  }
+}

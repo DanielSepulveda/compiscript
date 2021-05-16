@@ -45,7 +45,7 @@ Compiscript {
   identifierName = identifierStart identifierPart*
   identifier (an identifier) = ~keyword identifierName
 
-  literal = string | integer | float
+  literal = string | float | integer
 
   singleLineComment = "//" (~"\n" char)* &("\n" | end)
   multiLineComment = "/*" (~"*/" char)* "*/"
