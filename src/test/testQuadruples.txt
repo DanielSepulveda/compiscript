@@ -10,20 +10,20 @@ main ()
   //print("El resultado es", 1 + (iB * iC - fB) / (fC - fD));
   //read(iA);
 
-  /* if (iA+iB>iC*iD) {
+  if (iA+iB>iC*iD) {
     iA = iB + iD;
   } else {
     iA = iD - iC;
-  }  */
+  }
 
   /* while (iA > iB * iC) {
     iA = iA - iD;
     print(iA);
   } */
 
-  for (iA = 1) until (1 + (iB * iC - iD) / (iC - iD)) {
+  /*for (iA = 1) until (1 + (iB * iC - iD) / (iC - iD)) {
     iA = iA + 1;
-  }
+  }*/
 
   iB = 0;
 }

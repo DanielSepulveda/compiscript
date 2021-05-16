@@ -1,7 +1,7 @@
 import grammar from './grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
-import { Var, Types } from '../utils/types';
+import { Var, Types, VarTypes } from '../utils/types';
 import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {
@@ -31,8 +31,23 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   /*                                 Expressions                                */
   /* -------------------------------------------------------------------------- */
 
+  CallExpression(identifier, _1, args, _2) {
+    const id = identifier.applySemantics();
+
+    if (symbolTable.internal.funcDir[id] === undefined) {
+      throw new Error(`Error: function call on an undefined function '${id}'`);
+    }
+
+    args.asIteration().applySemantics();
+
+    symbolTable.handleFuncCall(id);
+
+    return;
+  },
+
   /* --------------------------- Primary expression --------------------------- */
   PrimaryExpression_callExp(callExpression) {
+    callExpression.applySemantics();
     return;
   },
   PrimaryExpression_id(identifier) {
@@ -41,7 +56,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   PrimaryExpression_literal(literal) {
-    const l = literal.applySemantics() as { value: string; type: Types };
+    const l = literal.applySemantics() as { value: string; type: VarTypes };
 
     symbolTable.pushLiteralOperand(l.value, l.type);
 
@@ -288,6 +303,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   CallStatement(callExpression, _1) {
+    callExpression.applySemantics();
     return;
   },
   IfElseStatement(_1, block) {
@@ -347,6 +363,10 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   ReturnStatement(_1, _2, expression, _3, _4) {
+    expression.applySemantics();
+
+    symbolTable.handleFuncReturn();
+
     return;
   },
 
@@ -365,6 +385,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     const type = paramType.applySemantics();
 
     symbolTable.addVar(name, type);
+    symbolTable.addFunctionParam(type);
 
     return;
   },
@@ -388,10 +409,17 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   FunctionStatement(functionDeclaration, varDeclaration, block) {
     functionDeclaration.applySemantics();
     varDeclaration.applySemantics();
+    block.applySemantics();
+
+    symbolTable.handleFuncEnd();
     return;
   },
   MainStatement(_1, _2, _3, block) {
+    symbolTable.handleBeginMain();
+
     block.applySemantics();
+
+    symbolTable.handleEndMain();
     return;
   },
 
