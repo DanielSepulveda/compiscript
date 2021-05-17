@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse, compile } from './compiler';
+require('dotenv').config()
 
 const name = 'patito.txt';
 
