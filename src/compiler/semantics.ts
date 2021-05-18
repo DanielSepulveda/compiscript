@@ -1,4 +1,4 @@
-import grammar from './grammar';
+import grammar from '../grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
 import { Var, Types, VarTypes } from '../utils/types';

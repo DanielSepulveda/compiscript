@@ -1,23 +1,52 @@
-import {
-  operators,
-  operatorsLabels,
-  extraOperators,
-  extraOperatorsLabels,
-  globalMemoryPointers,
-  localMemoryPointers,
-  constantMemoryPointers,
-} from './enums';
-
 export type VarTypes = 'int' | 'float' | 'string';
 
 export type Types = VarTypes | 'void';
 
 export type OperandResultTypes = VarTypes | 'error';
 
-export type Operators = typeof operators[number];
-export type OperatorsLabels = typeof operatorsLabels[number];
-export type ExtraOperators = typeof extraOperators[number];
-export type ExtraOperatorsLabels = typeof extraOperatorsLabels[number];
+export type Operators =
+  | 'or'
+  | 'and'
+  | '=='
+  | '!='
+  | '<'
+  | '>'
+  | '<='
+  | '>='
+  | '+'
+  | '-'
+  | '*'
+  | '/';
+
+export type OperatorsLabels =
+  | 'OR'
+  | 'AND'
+  | 'EQ'
+  | 'NEQ'
+  | 'GT'
+  | 'LT'
+  | 'LTEQ'
+  | 'GTEQ'
+  | 'SUM'
+  | 'SUB'
+  | 'MULT'
+  | 'DIV';
+
+export type ExtraOperators = '=' | 'read' | 'print' | 'return';
+
+export type ExtraOperatorsLabels =
+  | 'ASSIGN'
+  | 'READ'
+  | 'PRINT'
+  | 'RETURN'
+  | 'GOTO'
+  | 'GOTOT'
+  | 'GOTOF'
+  | 'ENDFUNC'
+  | 'ERA'
+  | 'PARAMETER'
+  | 'GOSUB'
+  | 'END';
 
 export type QuadrupleOperations = Operators | ExtraOperators;
 export type QuadrupleOperationsLabels = OperatorsLabels | ExtraOperatorsLabels;
@@ -39,7 +68,7 @@ export type Func = {
   returnType: Types;
   vars: Record<string, Var> | null;
   params: VarTypes[];
-  size?: Record<LocalMemoryPointers | GlobalMemoryPointers, number>;
+  size?: Record<LocalMemoryCounter | GlobalMemoryCounter, number>;
   beginAddr?: number;
   isGlobal: boolean;
 };
@@ -61,10 +90,19 @@ export type OperationExpression = {
   op: Operators;
 };
 
-export type GlobalMemoryPointers = typeof globalMemoryPointers[number];
-export type LocalMemoryPointers = typeof localMemoryPointers[number];
-export type ConstantMemoryPointers = typeof constantMemoryPointers[number];
-export type MemoryPointers =
-  | GlobalMemoryPointers
-  | LocalMemoryPointers
-  | ConstantMemoryPointers;
+export type GlobalMemoryCounter = 'globalInt' | 'globalFloat' | 'globalString';
+export type LocalMemoryCounter =
+  | 'localInt'
+  | 'localIntTemporal'
+  | 'localFloat'
+  | 'localFloatTemporal'
+  | 'localString'
+  | 'localStringTemporal';
+export type ConstantMemoryCounter =
+  | 'constantInt'
+  | 'constantFloat'
+  | 'constantString';
+export type MemoryCounter =
+  | GlobalMemoryCounter
+  | LocalMemoryCounter
+  | ConstantMemoryCounter;
