@@ -7,7 +7,7 @@ import {
   Quadruple,
   VarTypes,
   OperationExpression,
-  MemoryCounter,
+  VarScope,
 } from '../utils/types';
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
@@ -119,7 +119,7 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
   currentFunc.beginAddr = quadCount;
 
   if (type !== 'void') {
-    let pointer: MemoryCounter;
+    let pointer: VarScope;
     if (type === 'int') {
       pointer = 'globalInt';
     } else if (type === 'float') {
@@ -216,7 +216,7 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims) {
     throw new Error(`Internal error: ${currentFunc.name} var table is null`);
 
   let addr;
-  let pointer: MemoryCounter;
+  let pointer: VarScope;
   if (currentFunc.isGlobal) {
     if (type === 'int') {
       pointer = 'globalInt';
@@ -703,7 +703,7 @@ export function handleFuncCall(funcName: string) {
     const funcGlobalVar = getVar(funcToCall.name);
 
     const newTemp = getNewTemp();
-    let pointer: MemoryCounter;
+    let pointer: VarScope;
     if (funcGlobalVar.type === 'int') {
       pointer = 'localIntTemporal';
     } else if (funcGlobalVar.type === 'float') {

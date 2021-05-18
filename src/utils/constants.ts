@@ -3,7 +3,7 @@ import {
   OperatorsLabels,
   QuadrupleOperations,
   QuadrupleOperationsLabels,
-  MemoryCounter,
+  VarScope,
 } from './types';
 
 export const OPERATORS: Record<OperatorsLabels, Operators> = {
@@ -43,7 +43,7 @@ export const QUADRUPLE_OPERATIONS: Record<
   return: 'RETURN',
 };
 
-export const RANGES: Record<MemoryCounter, [number, number]> = {
+export const RANGES: Record<VarScope, [number, number]> = {
   globalInt: [1000, 1999],
   globalFloat: [2000, 2999],
   globalString: [3000, 3999],

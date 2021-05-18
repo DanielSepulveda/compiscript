@@ -14,7 +14,8 @@ const testFile = fs.readFileSync(TESTING_DIR + name).toString();
 try {
   const parsed = parse(testFile);
   compile(parsed);
-  vm.load();
+  vm.init();
+  vm.logData();
 } catch (error) {
   console.log(error.message);
 }

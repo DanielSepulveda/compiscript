@@ -68,7 +68,7 @@ export type Func = {
   returnType: Types;
   vars: Record<string, Var> | null;
   params: VarTypes[];
-  size?: Record<LocalMemoryCounter | GlobalMemoryCounter, number>;
+  size?: Record<LocalVarScope | TemporalVarScope | GlobalVarScope, number>;
   beginAddr?: number;
   isGlobal: boolean;
 };
@@ -90,22 +90,21 @@ export type OperationExpression = {
   op: Operators;
 };
 
-export type GlobalMemoryCounter = 'globalInt' | 'globalFloat' | 'globalString';
-export type LocalMemoryCounter =
-  | 'localInt'
+export type GlobalVarScope = 'globalInt' | 'globalFloat' | 'globalString';
+export type LocalVarScope = 'localInt' | 'localFloat' | 'localString';
+export type TemporalVarScope =
   | 'localIntTemporal'
-  | 'localFloat'
   | 'localFloatTemporal'
-  | 'localString'
   | 'localStringTemporal';
-export type ConstantMemoryCounter =
+export type ConstantVarScope =
   | 'constantInt'
   | 'constantFloat'
   | 'constantString';
-export type MemoryCounter =
-  | GlobalMemoryCounter
-  | LocalMemoryCounter
-  | ConstantMemoryCounter;
+export type VarScope =
+  | GlobalVarScope
+  | LocalVarScope
+  | TemporalVarScope
+  | ConstantVarScope;
 
 export type CompilationOutput = {
   funcDir: Record<string, Func>;

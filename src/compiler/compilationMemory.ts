@@ -1,7 +1,7 @@
-import { MemoryCounter } from '../utils/types';
+import { VarScope } from '../utils/types';
 import { RANGES } from '../utils/constants';
 
-type MemoryCounters = Record<MemoryCounter, number>;
+type MemoryCounters = Record<VarScope, number>;
 
 export default class CompilationMemory {
   private counters: MemoryCounters;
@@ -23,7 +23,7 @@ export default class CompilationMemory {
     };
   }
 
-  getNextAddressFor(counter: MemoryCounter): number {
+  getNextAddressFor(counter: VarScope): number {
     const currentAddr = this.counters[counter];
     const maxAddr = RANGES[counter][1];
 
