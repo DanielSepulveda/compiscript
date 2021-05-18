@@ -5,6 +5,7 @@ import semantics from './semantics';
 import { logAll } from './logger';
 import * as symbolTable from './symbolTable';
 import { jsonLog, jsonStringify } from '../utils/helpers';
+import { CompilationOutput } from '../utils/types';
 
 const outputPath = path.join(__dirname, '..', 'out');
 
@@ -15,7 +16,7 @@ const compile = (input: ohm.MatchResult) => {
     logAll();
   }
 
-  const output = {
+  const output: CompilationOutput = {
     funcDir: symbolTable.internal.funcDir,
     quadruples: symbolTable.internal.quadrupleArr,
     constants: symbolTable.internal.constants,

@@ -106,3 +106,13 @@ export type MemoryCounter =
   | GlobalMemoryCounter
   | LocalMemoryCounter
   | ConstantMemoryCounter;
+
+export type CompilationOutput = {
+  funcDir: Record<string, Func>;
+  quadruples: Quadruple[];
+  constants: Record<string, number>;
+};
+
+export type ParseResult<T> =
+  | { parsed: T; hasError: false; error?: undefined }
+  | { parsed?: undefined; hasError: true; error?: unknown };
