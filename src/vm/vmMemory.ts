@@ -34,9 +34,9 @@ const scopeRanges: ScopeRanges = {
 };
 
 export type LoadInitialMemory = Partial<Record<VarTypes, number>>;
-type MemoryMap = Record<string, string | null>;
+export type MemoryValue = string | null;
+export type MemoryMap = Record<string, MemoryValue>;
 type MemoryType = keyof typeof scopeRanges;
-export type MemoryValue = { addr: string; value: string };
 
 class VmMemory {
   private type: MemoryType;
@@ -96,7 +96,7 @@ class VmMemory {
     return this.allAddresses.includes(addr);
   }
 
-  setIntValue(addr: string, value: string) {
+  private setIntValue(addr: string, value: MemoryValue) {
     if (this.intMemory === null) {
       throw new Error(
         'Memory error: tried to set int value when int memory is null'
@@ -106,7 +106,7 @@ class VmMemory {
     this.intMemory[addr] = value;
   }
 
-  setFloatValue(addr: string, value: string) {
+  private setFloatValue(addr: string, value: MemoryValue) {
     if (this.floatMemory === null) {
       throw new Error(
         'Memory error: tried to set float value when float memory is null'
@@ -116,7 +116,7 @@ class VmMemory {
     this.floatMemory[addr] = value;
   }
 
-  setStringValue(addr: string, value: string) {
+  private setStringValue(addr: string, value: MemoryValue) {
     if (this.stringMemory === null) {
       throw new Error(
         'Memory error: tried to set string value when string memory is null'
@@ -126,36 +126,90 @@ class VmMemory {
     this.stringMemory[addr] = value;
   }
 
-  setValues(newValues: MemoryValue[]) {
-    newValues.forEach((val) => {
-      if (!this.isAddrValid(val.addr)) {
-        throw new Error(
-          `Memory error: cannot set value to address ${val.addr} because the address doesn't exist in memory`
-        );
-      }
+  private getVarTypeFromAddr(addr: string) {
+    if (!this.isAddrValid(addr)) {
+      throw new Error(
+        `Memory error: cannot set value to address ${addr} because the address doesn't exist in memory`
+      );
+    }
 
-      const varScope = getVarScopeFromAddress(parseInt(val.addr, 10));
-      if (varScope === null) {
-        throw new Error(
-          `Memory error: address ${val.addr} doesn't fall in any known memory ranges`
-        );
-      }
+    const varScope = getVarScopeFromAddress(parseInt(addr, 10));
+    if (varScope === null) {
+      throw new Error(
+        `Memory error: address ${addr} doesn't fall in any known memory ranges`
+      );
+    }
 
-      const varType = getVarType(varScope);
-      if (varType === null) {
-        throw new Error(
-          `Memory error: unkwown var type for address ${val.addr}`
-        );
-      }
+    const varType = getVarType(varScope);
+    if (varType === null) {
+      throw new Error(`Memory error: unkwown var type for address ${addr}`);
+    }
 
-      if (varType === 'int') {
-        this.setIntValue(val.addr, val.value);
-      } else if (varType === 'float') {
-        this.setFloatValue(val.addr, val.value);
-      } else {
-        this.setStringValue(val.addr, val.value);
-      }
+    return varType;
+  }
+
+  setValue(addr: string, value: MemoryValue) {
+    const varType = this.getVarTypeFromAddr(addr);
+
+    if (varType === 'int') {
+      this.setIntValue(addr, value);
+    } else if (varType === 'float') {
+      this.setFloatValue(addr, value);
+    } else {
+      this.setStringValue(addr, value);
+    }
+  }
+
+  setMemory(newMemory: MemoryMap) {
+    if (isEmpty(newMemory)) {
+      return;
+    }
+
+    Object.entries(newMemory).forEach(([addr, val]) => {
+      this.setValue(addr, val);
     });
+  }
+
+  private getIntValue(addr: string) {
+    if (this.intMemory === null) {
+      throw new Error(
+        'Memory error: tried to get int value when int memory is null'
+      );
+    }
+
+    return this.intMemory[addr];
+  }
+
+  private getFloatValue(addr: string) {
+    if (this.floatMemory === null) {
+      throw new Error(
+        'Memory error: tried to get float value when float memory is null'
+      );
+    }
+
+    return this.floatMemory[addr];
+  }
+
+  private getStringValue(addr: string) {
+    if (this.stringMemory === null) {
+      throw new Error(
+        'Memory error: tried to get string value when string memory is null'
+      );
+    }
+
+    return this.stringMemory[addr];
+  }
+
+  getValue(addr: string) {
+    const varType = this.getVarTypeFromAddr(addr);
+
+    if (varType === 'int') {
+      return this.getIntValue(addr);
+    } else if (varType === 'float') {
+      return this.getFloatValue(addr);
+    } else {
+      return this.getStringValue(addr);
+    }
   }
 
   toJson() {

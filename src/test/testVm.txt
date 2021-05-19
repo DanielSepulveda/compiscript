@@ -1,0 +1,9 @@
+Program patito;
+vars
+  i, j, k: int;
+  f: float;
+
+main ()
+{
+  print(2 * 4);
+}

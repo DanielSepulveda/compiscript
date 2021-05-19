@@ -1,3 +1,5 @@
+import VmMemory from '../vm/vmMemory';
+
 export type VarTypes = 'int' | 'float' | 'string';
 
 export type Types = VarTypes | 'void';
@@ -68,7 +70,7 @@ export type Func = {
   returnType: Types;
   vars: Record<string, Var> | null;
   params: VarTypes[];
-  size?: Record<LocalVarScope | TemporalVarScope | GlobalVarScope, number>;
+  size: Record<LocalVarScope | TemporalVarScope | GlobalVarScope, number>;
   beginAddr?: number;
   isGlobal: boolean;
 };
@@ -115,3 +117,13 @@ export type CompilationOutput = {
 export type ParseResult<T> =
   | { parsed: T; hasError: false; error?: undefined }
   | { parsed?: undefined; hasError: true; error?: unknown };
+
+export type FuncDir = Record<string, Func>;
+
+export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'error';
+
+export type CallFrame = {
+  localMemory: VmMemory;
+  temporalMemory: VmMemory;
+  func: Func;
+};

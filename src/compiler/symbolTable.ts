@@ -8,6 +8,7 @@ import {
   VarTypes,
   OperationExpression,
   VarScope,
+  FuncDir,
 } from '../utils/types';
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
@@ -19,13 +20,14 @@ import * as logger from './logger';
 /*                                  Internals                                 */
 /* -------------------------------------------------------------------------- */
 
-const funcDir = {} as Record<string, Func>;
+const funcDir: FuncDir = {};
 
 const globalFunc: Func = {
   name: '',
   returnType: 'void',
   vars: {},
   params: [],
+  size: generateFunctionSize(),
   isGlobal: true,
 };
 const globalMemory = new Memory();
@@ -110,6 +112,7 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
     returnType: type,
     vars: {},
     params: [],
+    size: generateFunctionSize(),
     isGlobal: false,
   };
 
@@ -235,12 +238,8 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims) {
     }
   }
 
-  if (currentFunc.size === undefined) {
-    currentFunc.size = generateFunctionSize();
-  }
-
   addr = currentMemory!.getNextAddressFor(pointer);
-  currentFunc.size![pointer]++;
+  currentFunc.size[pointer]++;
 
   currentVarTable[name] = {
     name,
@@ -387,13 +386,9 @@ export function performOperation() {
     resAddr = String(currentMemory!.getNextAddressFor('localStringTemporal'));
   }
 
-  if (currentFunc.size === undefined) {
-    currentFunc.size = generateFunctionSize();
-  }
-
-  if (resType === 'int') currentFunc.size!['localIntTemporal']++;
-  else if (resType === 'float') currentFunc.size!['localFloatTemporal']++;
-  else currentFunc.size!['localStringTemporal']++;
+  if (resType === 'int') currentFunc.size['localIntTemporal']++;
+  else if (resType === 'float') currentFunc.size['localFloatTemporal']++;
+  else currentFunc.size['localStringTemporal']++;
 
   addQuadruple({
     op: QUADRUPLE_OPERATIONS[operator],
@@ -463,6 +458,7 @@ export function performRead(name: string) {
     left: '-1',
     right: '-1',
     res: v.name,
+    resAddr: String(v.addr),
   });
 }
 
@@ -479,6 +475,7 @@ export function validateConditionExpression() {
 export function fillQuadruple(quad: number, value: string) {
   const quadToFill = quadrupleArr[quad];
   quadToFill.res = value;
+  quadToFill.resAddr = value;
   quadrupleArr[quad] = quadToFill;
 }
 
@@ -529,6 +526,7 @@ export function handleLoopEnd() {
     left: '-1',
     right: '-1',
     res: String(jumpBegin),
+    resAddr: String(jumpBegin),
   });
 
   fillQuadruple(jumpFalse, String(quadCount));
@@ -593,11 +591,7 @@ export function handleForCompare(iteratorVarName: string) {
     currentMemory!.getNextAddressFor('localIntTemporal')
   );
 
-  if (currentFunc.size === undefined) {
-    currentFunc.size = generateFunctionSize();
-  }
-
-  currentFunc.size!['localIntTemporal']++;
+  currentFunc.size['localIntTemporal']++;
 
   addQuadruple({
     op: QUADRUPLE_OPERATIONS['<='],
@@ -629,6 +623,7 @@ export function handleForEnd() {
     left: '-1',
     right: '-1',
     res: String(jumpBegin),
+    resAddr: String(jumpBegin),
   });
 
   fillQuadruple(jumpFalse, String(quadCount));
@@ -689,6 +684,7 @@ export function handleFuncCall(funcName: string) {
       leftAddr: argAddr,
       right: '-1',
       res: String(paramIndex),
+      resAddr: String(paramIndex),
     });
   });
 

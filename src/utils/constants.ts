@@ -57,3 +57,5 @@ export const RANGES: Record<VarScope, [number, number]> = {
   constantFloat: [11_000, 11_999],
   constantString: [12_000, 12_999],
 };
+
+export const MAX_CALL_STACK = 1_000;
