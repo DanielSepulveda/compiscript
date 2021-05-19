@@ -7,6 +7,7 @@ import {
   GlobalVarScope,
   LocalVarScope,
   VarTypes,
+  Scope,
 } from '../utils/types';
 import { RANGES } from '../utils/constants';
 
@@ -21,7 +22,7 @@ export const mapToObj = (m: Map<any, any>) => {
   }, {} as Record<string, any>);
 };
 
-export function isValidData(o: any): o is CompilationOutput {
+export function isValidCompilationData(o: any): o is CompilationOutput {
   return 'funcDir' in o && 'quadruples' in o && 'constants' in o;
 }
 
@@ -75,6 +76,19 @@ export const isTemporalScope = (scope: VarScope): scope is LocalVarScope => {
   );
 };
 
+export const getScopeFromVarScope = (scope: VarScope): Scope => {
+  if (isGlobalScope(scope)) {
+    return 'global';
+  }
+  if (isLocalScope(scope)) {
+    return 'local';
+  }
+  if (isTemporalScope(scope)) {
+    return 'temporal';
+  }
+  return 'constant';
+};
+
 export const isInt = (scope: VarScope) => {
   return (
     scope === 'globalInt' ||
@@ -102,16 +116,16 @@ export const isString = (scope: VarScope) => {
   );
 };
 
-export const getVarType = (scope: VarScope): VarTypes | null => {
+export const getVarTypeFromVarScope = (scope: VarScope): VarTypes => {
   if (isInt(scope)) {
     return 'int';
   }
   if (isFloat(scope)) {
     return 'float';
   }
-  if (isString(scope)) {
-    return 'string';
-  }
+  return 'string';
+};
 
-  return null;
+export const isNumber = (type: VarTypes): type is 'int' | 'float' => {
+  return type === 'int' || type === 'float';
 };

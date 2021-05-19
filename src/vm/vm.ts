@@ -1,17 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Stack } from 'mnemonist';
-import { findKey, invert, isEmpty, noop } from 'lodash';
+import { findKey, invert, isEmpty, isUndefined, noop } from 'lodash';
 import VmMemory, { MemoryMap, MemoryValue } from './vmMemory';
 import {
   safeJsonParse,
-  isValidData,
+  isValidCompilationData,
   getVarScopeFromAddress,
   isConstantScope,
-  isGlobalScope,
-  isLocalScope,
-  isTemporalScope,
-  jsonLog,
+  getVarTypeFromVarScope,
+  getScopeFromVarScope,
+  isNumber,
 } from '../utils/helpers';
 import {
   CompilationOutput,
@@ -19,7 +18,7 @@ import {
   Quadruple,
   ExecutionStatus,
   CallFrame,
-  VarScope,
+  VarTypes,
 } from '../utils/types';
 
 /* -------------------------------------------------------------------------- */
@@ -55,7 +54,7 @@ let executionStatus: ExecutionStatus = 'idle';
 
 function loadCompilationData() {
   const rawDataAsString = fs.readFileSync(objFilePath, 'utf8');
-  const parsedResult = safeJsonParse(isValidData)(rawDataAsString);
+  const parsedResult = safeJsonParse(isValidCompilationData)(rawDataAsString);
 
   if (parsedResult.hasError) {
     throw new Error('Internal error: Error loading compilation output file');
@@ -160,34 +159,45 @@ export function init() {
 
 /* -------------------------------- EXECUTION ------------------------------- */
 
-function getMemoryFromScope(scope: VarScope) {
-  if (isGlobalScope(scope)) {
+function isValid(val: string | undefined) {
+  if (isUndefined(val) || val === '-1') {
+    throw new Error(
+      'Vm Error: tried to perform an operation on an undefined value'
+    );
+  }
+
+  return val;
+}
+
+function getAddrVarScope(addr: string) {
+  const varScope = getVarScopeFromAddress(parseInt(addr));
+  if (varScope === null) {
+    throw new Error(
+      `Memory error: address ${addr} doesn't fall in any known memory ranges`
+    );
+  }
+  return varScope;
+}
+
+function getMemoryForAddr(addr: string) {
+  const scope = getScopeFromVarScope(getAddrVarScope(addr));
+
+  if (scope === 'global') {
     return globalMemory;
   }
-  if (isConstantScope(scope)) {
+  if (scope === 'constant') {
     return constantMemory;
   }
-  if (isLocalScope(scope)) {
+  if (scope === 'local') {
     return currentFrame.localMemory;
   }
   return currentFrame.temporalMemory;
 }
 
 function getMemoryValue(addr: string) {
-  const varScope = getVarScopeFromAddress(parseInt(addr, 10));
-  if (varScope === null) {
-    throw new Error(
-      `Memory error: address ${addr} doesn't fall in any known memory ranges`
-    );
-  }
+  const memory = getMemoryForAddr(addr);
 
-  const memory = getMemoryFromScope(varScope);
-  return memory.getValue(addr);
-}
-
-function getAddressValue(addr: string) {
-  const val = getMemoryValue(addr);
-
+  const val = memory.getValue(addr);
   if (val === null) {
     throw new Error(
       `Memory error: tried to perform an operation on an adress that has no value`
@@ -197,40 +207,156 @@ function getAddressValue(addr: string) {
   return val;
 }
 
-function checkAddr(addr: string | undefined) {
-  if (addr === undefined) {
-    throw new Error('Memory error: tried to access undefined memory address');
+function getAddrVarType(addr: string) {
+  return getVarTypeFromVarScope(getAddrVarScope(addr));
+}
+
+function getAddrValueAndType(addr: string): [string | number, VarTypes] {
+  const varType = getAddrVarType(addr);
+  const memValue = getMemoryValue(addr);
+
+  let val;
+
+  if (varType === 'int') {
+    val = parseInt(memValue);
+  } else if (varType === 'float') {
+    val = parseFloat(memValue);
+  } else {
+    val = memValue;
   }
 
-  return addr;
+  return [val, varType];
+}
+
+function getAddrNumberValue(addr: string): [number, VarTypes] {
+  const [val, varType] = getAddrValueAndType(addr);
+
+  if (!isNumber(varType)) {
+    throw new Error('Error: value is not of type number (int | float)');
+  }
+
+  return [val as number, varType];
+}
+
+function getAddrIntValue(addr: string): [number, VarTypes] {
+  const [val, varType] = getAddrValueAndType(addr);
+
+  if (varType !== 'int') {
+    throw new Error('Error: value is not of type number (int | float)');
+  }
+
+  return [val as number, varType];
+}
+
+function transformBoolToInt(val: boolean): '1' | '-1' {
+  return val ? '1' : '-1';
+}
+
+function transformIntToBool(val: number): boolean {
+  return val === 1;
 }
 
 function executeQuad(quad: Quadruple) {
-  const left = quad.leftAddr;
-  const right = quad.rightAddr;
-  const res = quad.resAddr;
+  const left = quad.left;
+  const right = quad.right;
+  const res = quad.res;
 
   let leftVal, rightVal, resVal;
-
+  let leftType, rightType;
   let tempNextIP: number | null = null;
 
   switch (quad.op) {
     // EXPRESSIONS
     case 'MULT':
-      leftVal = parseInt(getAddressValue(checkAddr(left)), 10);
-      rightVal = parseInt(getAddressValue(checkAddr(right)), 10);
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
       resVal = leftVal * rightVal;
-      currentFrame.temporalMemory.setValue(checkAddr(res), String(resVal));
+      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      break;
+    case 'DIV':
+      [leftVal, leftType] = getAddrNumberValue(isValid(left));
+      [rightVal, rightType] = getAddrNumberValue(isValid(right));
+      if (leftType === 'float' || rightType === 'float') {
+        resVal = leftVal / rightVal;
+      } else {
+        resVal = Math.floor(leftVal / rightVal);
+      }
+      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      break;
+    case 'SUM':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = leftVal + rightVal;
+      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      break;
+    case 'SUB':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = leftVal - rightVal;
+      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      break;
+    case 'LT':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = transformBoolToInt(leftVal < rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'GT':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = transformBoolToInt(leftVal > rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'LTEQ':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = transformBoolToInt(leftVal <= rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'GTEQ':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = transformBoolToInt(leftVal >= rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'EQ':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = transformBoolToInt(leftVal == rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'NEQ':
+      [leftVal] = getAddrNumberValue(isValid(left));
+      [rightVal] = getAddrNumberValue(isValid(right));
+      resVal = transformBoolToInt(leftVal != rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'AND':
+      [leftVal] = getAddrIntValue(isValid(left));
+      [rightVal] = getAddrIntValue(isValid(right));
+      leftVal = transformIntToBool(leftVal);
+      rightVal = transformIntToBool(rightVal);
+      resVal = transformBoolToInt(leftVal && rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
+      break;
+    case 'OR':
+      [leftVal] = getAddrIntValue(isValid(left));
+      [rightVal] = getAddrIntValue(isValid(right));
+      leftVal = transformIntToBool(leftVal);
+      rightVal = transformIntToBool(rightVal);
+      resVal = transformBoolToInt(leftVal || rightVal);
+      currentFrame.temporalMemory.setValue(isValid(res), resVal);
       break;
 
     // STATEMENTS
     case 'PRINT':
-      console.log(getAddressValue(checkAddr(res)));
+      [resVal] = getAddrValueAndType(isValid(res));
+      console.log(resVal);
       break;
 
     // JUMPS
     case 'GOTO':
-      tempNextIP = parseInt(checkAddr(res), 10);
+      tempNextIP = parseInt(isValid(res));
       break;
 
     // END

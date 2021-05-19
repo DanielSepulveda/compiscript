@@ -3,7 +3,7 @@ import { VarTypes } from '../utils/types';
 import { RANGES } from '../utils/constants';
 import {
   jsonStringify,
-  getVarType,
+  getVarTypeFromVarScope,
   getVarScopeFromAddress,
 } from '../utils/helpers';
 
@@ -133,14 +133,14 @@ class VmMemory {
       );
     }
 
-    const varScope = getVarScopeFromAddress(parseInt(addr, 10));
+    const varScope = getVarScopeFromAddress(parseInt(addr));
     if (varScope === null) {
       throw new Error(
         `Memory error: address ${addr} doesn't fall in any known memory ranges`
       );
     }
 
-    const varType = getVarType(varScope);
+    const varType = getVarTypeFromVarScope(varScope);
     if (varType === null) {
       throw new Error(`Memory error: unkwown var type for address ${addr}`);
     }

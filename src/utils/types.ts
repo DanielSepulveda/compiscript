@@ -6,6 +6,8 @@ export type Types = VarTypes | 'void';
 
 export type OperandResultTypes = VarTypes | 'error';
 
+export type Scope = 'global' | 'local' | 'temporal' | 'constant';
+
 export type Operators =
   | 'or'
   | 'and'
@@ -79,11 +81,8 @@ export type Quadruple = {
   count: number;
   op: QuadrupleOperationsLabels;
   left: string;
-  leftAddr?: string;
   right: string;
-  rightAddr?: string;
   res: string;
-  resAddr?: string;
 };
 
 export type OperationExpression = {

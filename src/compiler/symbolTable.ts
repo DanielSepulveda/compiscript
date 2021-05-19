@@ -343,11 +343,26 @@ export function getOperationResultType(exp: OperationExpression) {
   return res;
 }
 
-export function addQuadruple(newQuad: Omit<Quadruple, 'count'>) {
-  const newQuadruple: Quadruple = {
+export function addQuadruple(
+  newQuad: Omit<Quadruple, 'count'>,
+  extra?: { leftOp?: string; rightOp?: string; resOp?: string }
+) {
+  let newQuadruple: Quadruple = {
     ...newQuad,
     count: quadCount++,
   };
+
+  if (process.env.TEST_COMPILER == 'true') {
+    if (extra?.leftOp) {
+      newQuadruple.left = extra.leftOp;
+    }
+    if (extra?.rightOp) {
+      newQuadruple.right = extra.rightOp;
+    }
+    if (extra?.resOp) {
+      newQuadruple.res = extra.resOp;
+    }
+  }
 
   quadrupleArr.push(newQuadruple);
 }
@@ -390,15 +405,15 @@ export function performOperation() {
   else if (resType === 'float') currentFunc.size['localFloatTemporal']++;
   else currentFunc.size['localStringTemporal']++;
 
-  addQuadruple({
-    op: QUADRUPLE_OPERATIONS[operator],
-    left: leftOperand,
-    leftAddr,
-    right: rightOperand,
-    rightAddr,
-    res: newTemp,
-    resAddr,
-  });
+  addQuadruple(
+    {
+      op: QUADRUPLE_OPERATIONS[operator],
+      left: leftAddr,
+      right: rightAddr,
+      res: resAddr,
+    },
+    { leftOp: leftOperand, rightOp: rightOperand, resOp: newTemp }
+  );
 
   operandStack.push(newTemp);
   addrStack.push(resAddr);
@@ -420,14 +435,18 @@ export function performAssign({ isReturn = false } = {}) {
     );
   }
 
-  addQuadruple({
-    op: QUADRUPLE_OPERATIONS['='],
-    left: valueOperand,
-    leftAddr: valueAddr,
-    right: '-1',
-    res: resOperand,
-    resAddr,
-  });
+  addQuadruple(
+    {
+      op: QUADRUPLE_OPERATIONS['='],
+      left: valueAddr,
+      right: '-1',
+      res: resAddr,
+    },
+    {
+      leftOp: valueOperand,
+      resOp: resOperand,
+    }
+  );
 
   if (isReturn) {
     operandStack.push(resOperand);
@@ -441,25 +460,33 @@ export function performPrint() {
   safePop(typeStack);
   const valueAddr = safePop(addrStack);
 
-  addQuadruple({
-    op: QUADRUPLE_OPERATIONS['print'],
-    left: '-1',
-    right: '-1',
-    res: valueOperand,
-    resAddr: valueAddr,
-  });
+  addQuadruple(
+    {
+      op: QUADRUPLE_OPERATIONS['print'],
+      left: '-1',
+      right: '-1',
+      res: valueAddr,
+    },
+    {
+      resOp: valueOperand,
+    }
+  );
 }
 
 export function performRead(name: string) {
   const v = getVar(name);
 
-  addQuadruple({
-    op: QUADRUPLE_OPERATIONS['read'],
-    left: '-1',
-    right: '-1',
-    res: v.name,
-    resAddr: String(v.addr),
-  });
+  addQuadruple(
+    {
+      op: QUADRUPLE_OPERATIONS['read'],
+      left: '-1',
+      right: '-1',
+      res: String(v.addr),
+    },
+    {
+      resOp: v.name,
+    }
+  );
 }
 
 export function validateConditionExpression() {
@@ -475,7 +502,6 @@ export function validateConditionExpression() {
 export function fillQuadruple(quad: number, value: string) {
   const quadToFill = quadrupleArr[quad];
   quadToFill.res = value;
-  quadToFill.resAddr = value;
   quadrupleArr[quad] = quadToFill;
 }
 
@@ -485,13 +511,17 @@ export function handleCondition() {
   const condRes = safePop(operandStack);
   const condAddr = safePop(addrStack);
 
-  addQuadruple({
-    op: 'GOTOF',
-    left: condRes,
-    leftAddr: condAddr,
-    right: '-1',
-    res: '-1',
-  });
+  addQuadruple(
+    {
+      op: 'GOTOF',
+      left: condAddr,
+      right: '-1',
+      res: '-1',
+    },
+    {
+      leftOp: condRes,
+    }
+  );
 
   jumpsStack.push(quadCount - 1);
 }
@@ -526,7 +556,6 @@ export function handleLoopEnd() {
     left: '-1',
     right: '-1',
     res: String(jumpBegin),
-    resAddr: String(jumpBegin),
   });
 
   fillQuadruple(jumpFalse, String(quadCount));
@@ -553,14 +582,18 @@ export function handleForAssign() {
     );
   }
 
-  addQuadruple({
-    op: QUADRUPLE_OPERATIONS['='],
-    left: initialValueOperand,
-    leftAddr: initialValueAddr,
-    right: '-1',
-    res: iteratorOperand,
-    resAddr: iteratorAddr,
-  });
+  addQuadruple(
+    {
+      op: QUADRUPLE_OPERATIONS['='],
+      left: initialValueAddr,
+      right: '-1',
+      res: iteratorAddr,
+    },
+    {
+      leftOp: initialValueOperand,
+      resOp: iteratorOperand,
+    }
+  );
 
   jumpsStack.push(quadCount);
 
@@ -593,23 +626,31 @@ export function handleForCompare(iteratorVarName: string) {
 
   currentFunc.size['localIntTemporal']++;
 
-  addQuadruple({
-    op: QUADRUPLE_OPERATIONS['<='],
-    left: iteratorVar.name,
-    leftAddr: String(iteratorVar.addr),
-    right: expressionOperand,
-    rightAddr: expressionAddr,
-    res: newTemp,
-    resAddr: newTempAddr,
-  });
+  addQuadruple(
+    {
+      op: QUADRUPLE_OPERATIONS['<='],
+      left: String(iteratorVar.addr),
+      right: expressionAddr,
+      res: newTempAddr,
+    },
+    {
+      leftOp: iteratorVar.name,
+      rightOp: expressionOperand,
+      resOp: newTemp,
+    }
+  );
 
-  addQuadruple({
-    op: 'GOTOF',
-    left: newTemp,
-    leftAddr: newTempAddr,
-    right: '-1',
-    res: '-1',
-  });
+  addQuadruple(
+    {
+      op: 'GOTOF',
+      left: newTempAddr,
+      right: '-1',
+      res: '-1',
+    },
+    {
+      leftOp: newTemp,
+    }
+  );
 
   jumpsStack.push(quadCount - 1);
 }
@@ -623,7 +664,6 @@ export function handleForEnd() {
     left: '-1',
     right: '-1',
     res: String(jumpBegin),
-    resAddr: String(jumpBegin),
   });
 
   fillQuadruple(jumpFalse, String(quadCount));
@@ -678,14 +718,17 @@ export function handleFuncCall(funcName: string) {
       );
     }
 
-    addQuadruple({
-      op: 'PARAMETER',
-      left: arg,
-      leftAddr: argAddr,
-      right: '-1',
-      res: String(paramIndex),
-      resAddr: String(paramIndex),
-    });
+    addQuadruple(
+      {
+        op: 'PARAMETER',
+        left: argAddr,
+        right: '-1',
+        res: String(paramIndex),
+      },
+      {
+        leftOp: arg,
+      }
+    );
   });
 
   addQuadruple({
@@ -744,13 +787,17 @@ export function handleFuncReturn() {
     );
   }
 
-  addQuadruple({
-    op: 'RETURN',
-    left: '-1',
-    right: '-1',
-    res: valueOperand,
-    resAddr: valueAddr,
-  });
+  addQuadruple(
+    {
+      op: 'RETURN',
+      left: '-1',
+      right: '-1',
+      res: valueAddr,
+    },
+    {
+      resOp: valueOperand,
+    }
+  );
 }
 
 export function handleEndMain() {
