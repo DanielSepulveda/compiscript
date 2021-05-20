@@ -8,7 +8,7 @@ import {
   LocalVarScope,
   VarTypes,
   Scope,
-} from '../utils/types';
+} from '../types';
 import { RANGES } from '../utils/constants';
 
 export const jsonStringify = (v: any) => JSON.stringify(v, null, 2);

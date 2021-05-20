@@ -4,7 +4,7 @@ import {
   QuadrupleOperations,
   QuadrupleOperationsLabels,
   VarScope,
-} from './types';
+} from '../types';
 
 export const OPERATORS: Record<OperatorsLabels, Operators> = {
   SUM: '+',

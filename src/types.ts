@@ -1,4 +1,4 @@
-import VmMemory from '../vm/vmMemory';
+import VmMemory from './vm/vmMemory';
 
 export type VarTypes = 'int' | 'float' | 'string';
 

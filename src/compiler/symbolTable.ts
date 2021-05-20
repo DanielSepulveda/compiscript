@@ -9,9 +9,10 @@ import {
   OperationExpression,
   VarScope,
   FuncDir,
-} from '../utils/types';
+} from '../types';
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
+import { checkIfCanAssignType } from './assignTable';
 import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
 import {
   jsonLog,
@@ -44,7 +45,7 @@ const constants: Record<string, number> = {};
 
 const operatorStack = new Stack<Operators>();
 const operandStack = new Stack<string>();
-const typeStack = new Stack<Types>();
+const typeStack = new Stack<VarTypes>();
 const jumpsStack = new Stack<number>();
 const addrStack = new Stack<string>();
 
@@ -441,7 +442,12 @@ export function performAssign({ isReturn = false } = {}) {
   const resType = safePop(typeStack);
   const resAddr = safePop(addrStack);
 
-  if (valueType !== resType) {
+  const canAssign = checkIfCanAssignType({
+    variable: resType,
+    value: valueType,
+  });
+
+  if (!canAssign) {
     throw new Error(
       `Can't assign variable '${resOperand}' of type ${resType} value ${valueOperand} of type ${valueType}`
     );

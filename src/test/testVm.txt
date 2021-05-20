@@ -11,7 +11,14 @@ main ()
   k = 2;
   f = 3.1416;
 
-  if ((i - f) / k + f * i > i * j * f) {
+  f = f * k;
+  print(f);
+  f = k + 3;
+  print(f);
+  f = 3 + .1416;
+  print(f);
+
+  /*if ((i - f) / k + f * i > i * j * f) {
     print("La parte izq es mayor", (i - f) / k + f * i);
   } else {
     print("La parte der es mayor", i * j * f);
@@ -28,5 +35,5 @@ main ()
     k = k * 2;
     print(k);
     c = c + 1;
-  }
+  }*/
 }

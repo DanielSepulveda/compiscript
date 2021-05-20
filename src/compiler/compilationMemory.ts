@@ -1,4 +1,4 @@
-import { VarScope } from '../utils/types';
+import { VarScope } from '../types';
 import { RANGES } from '../utils/constants';
 
 type MemoryCounters = Record<VarScope, number>;

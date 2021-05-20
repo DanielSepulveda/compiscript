@@ -19,7 +19,7 @@ import {
   ExecutionStatus,
   CallFrame,
   VarTypes,
-} from '../utils/types';
+} from '../types';
 
 /* -------------------------------------------------------------------------- */
 /*                                  INTERNAL                                  */
@@ -361,6 +361,16 @@ function executeQuad(quad: Quadruple) {
       break;
 
     // Functions
+    case 'ERA':
+      break;
+    case 'PARAMETER':
+      break;
+    case 'GOSUB':
+      break;
+    case 'RETURN':
+      break;
+    case 'ENDFUNC':
+      break;
 
     // JUMPS
     case 'GOTO':

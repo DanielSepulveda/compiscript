@@ -1,7 +1,7 @@
 import grammar from '../grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
-import { Var, Types, VarTypes } from '../utils/types';
+import { Var, Types, VarTypes } from '../types';
 import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {

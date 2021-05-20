@@ -3,7 +3,7 @@ import {
   Operators,
   OperandResultTypes,
   OperationExpression,
-} from '../utils/types';
+} from '../types';
 
 /* -------------------------------------------------------------------------- */
 /*                                Dictionaries                                */

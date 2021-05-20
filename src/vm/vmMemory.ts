@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { VarTypes } from '../utils/types';
+import { VarTypes } from '../types';
 import { RANGES } from '../utils/constants';
 import {
   jsonStringify,
