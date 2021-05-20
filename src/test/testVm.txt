@@ -4,36 +4,12 @@ vars
   f: float;
   s: string;
 
+void function uno()
+{
+  print("Dentro de la funcion uno");
+}
+
 main ()
 {
-  i = 5;
-  j = 10;
-  k = 2;
-  f = 3.1416;
-
-  f = f * k;
-  print(f);
-  f = k + 3;
-  print(f);
-  f = 3 + .1416;
-  print(f);
-
-  /*if ((i - f) / k + f * i > i * j * f) {
-    print("La parte izq es mayor", (i - f) / k + f * i);
-  } else {
-    print("La parte der es mayor", i * j * f);
-  }
-
-  s = "Letrero para el while";
-
-  while (i > 3) {
-    print(s);
-    i = i - 1;
-  }
-  
-  for (c = 1) until (2 * 5 - 7) {
-    k = k * 2;
-    print(k);
-    c = c + 1;
-  }*/
+  uno();
 }

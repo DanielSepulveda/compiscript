@@ -11,7 +11,9 @@ import {
   getVarTypeFromVarScope,
   getScopeFromVarScope,
   isNumber,
+  safePop,
 } from '../utils/helpers';
+import { MAX_CALL_STACK } from '../utils/constants';
 import {
   CompilationOutput,
   FuncDir,
@@ -35,7 +37,9 @@ let quadruples: Quadruple[];
 
 let instructionPointer = 0;
 const callStack = new Stack<CallFrame>();
+const jumpsStack = new Stack<number>();
 let currentFrame: CallFrame;
+let tempNewFrame: CallFrame | null;
 
 /* --------------------------------- MEMORY --------------------------------- */
 
@@ -264,6 +268,7 @@ function executeQuad(quad: Quadruple) {
   let leftVal, rightVal, resVal;
   let leftType, rightType;
   let memory;
+  let func;
   let tempNextIP: number | null = null;
 
   switch (quad.op) {
@@ -362,14 +367,42 @@ function executeQuad(quad: Quadruple) {
 
     // Functions
     case 'ERA':
+      func = funcDir[left];
+      let newLocalMemory = new VmMemory('local', {
+        int: func.size.localInt,
+        float: func.size.localFloat,
+        string: func.size.localString,
+      });
+      let newTempMemory = new VmMemory('temporal', {
+        int: func.size.localIntTemporal,
+        float: func.size.localFloatTemporal,
+        string: func.size.localStringTemporal,
+      });
+      tempNewFrame = {
+        func,
+        localMemory: newLocalMemory,
+        temporalMemory: newTempMemory,
+      };
       break;
     case 'PARAMETER':
+      [leftVal] = getAddrValueAndType(isValid(left));
+      tempNewFrame!.localMemory.setValue(res, String(leftVal));
       break;
     case 'GOSUB':
+      if (callStack.size + 1 > MAX_CALL_STACK) {
+        throw new Error('Stack overflow error: too many function calls');
+      }
+      tempNextIP = parseInt(res);
+      jumpsStack.push(instructionPointer + 1);
+      callStack.push(tempNewFrame!);
+      currentFrame = tempNewFrame!;
+      tempNewFrame = null;
       break;
     case 'RETURN':
       break;
     case 'ENDFUNC':
+      tempNextIP = safePop(jumpsStack);
+      currentFrame = safePop(callStack);
       break;
 
     // JUMPS

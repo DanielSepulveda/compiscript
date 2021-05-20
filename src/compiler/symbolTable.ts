@@ -19,6 +19,7 @@ import {
   jsonStringify,
   getVarScopeFromAddress,
   getVarTypeFromVarScope,
+  safePop,
 } from '../utils/helpers';
 import * as logger from './logger';
 
@@ -76,18 +77,6 @@ export const internal = {
 /* -------------------------------------------------------------------------- */
 /*                                   Methods                                  */
 /* -------------------------------------------------------------------------- */
-
-export function safePop<T>(stack: Stack<T>) {
-  const val = stack.pop();
-
-  if (val === undefined) {
-    throw new Error(
-      `Internal error: Tried to perform 'pop' on a stack and got no value`
-    );
-  }
-
-  return val;
-}
 
 /**
  * Adds a new function
@@ -759,8 +748,8 @@ export function handleFuncCall(funcName: string) {
   addQuadruple({
     op: 'GOSUB',
     left: funcToCall.name,
-    right: String(funcToCall.beginAddr),
-    res: '-1',
+    right: '-1',
+    res: String(funcToCall.beginAddr),
   });
 
   if (funcToCall.returnType !== 'void') {

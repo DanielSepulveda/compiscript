@@ -1,4 +1,5 @@
 import { findKey } from 'lodash';
+import { Stack } from 'mnemonist';
 import {
   CompilationOutput,
   ParseResult,
@@ -129,3 +130,15 @@ export const getVarTypeFromVarScope = (scope: VarScope): VarTypes => {
 export const isNumber = (type: VarTypes): type is 'int' | 'float' => {
   return type === 'int' || type === 'float';
 };
+
+export function safePop<T>(stack: Stack<T>) {
+  const val = stack.pop();
+
+  if (val === undefined) {
+    throw new Error(
+      `Internal error: Tried to perform 'pop' on a stack and got no value`
+    );
+  }
+
+  return val;
+}
