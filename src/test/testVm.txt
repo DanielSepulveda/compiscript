@@ -1,10 +1,32 @@
 Program patito;
 vars
-  i, j, k: int;
+  i, j, k, c: int;
   f: float;
+  s: string;
 
 main ()
 {
-  print((1 + 2) * 4 / 2);
-  print((((1 + 2) * 4 / 2) > 10) and (1 < 2));
+  i = 5;
+  j = 10;
+  k = 2;
+  f = 3.1416;
+
+  if ((i - f) / k + f * i > i * j * f) {
+    print("La parte izq es mayor", (i - f) / k + f * i);
+  } else {
+    print("La parte der es mayor", i * j * f);
+  }
+
+  s = "Letrero para el while";
+
+  while (i > 3) {
+    print(s);
+    i = i - 1;
+  }
+  
+  for (c = 1) until (2 * 5 - 7) {
+    k = k * 2;
+    print(k);
+    c = c + 1;
+  }
 }

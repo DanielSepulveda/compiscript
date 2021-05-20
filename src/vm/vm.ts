@@ -159,8 +159,8 @@ export function init() {
 
 /* -------------------------------- EXECUTION ------------------------------- */
 
-function isValid(val: string | undefined) {
-  if (isUndefined(val) || val === '-1') {
+function isValid(val: string) {
+  if (val === '-1') {
     throw new Error(
       'Vm Error: tried to perform an operation on an undefined value'
     );
@@ -263,6 +263,7 @@ function executeQuad(quad: Quadruple) {
 
   let leftVal, rightVal, resVal;
   let leftType, rightType;
+  let memory;
   let tempNextIP: number | null = null;
 
   switch (quad.op) {
@@ -349,6 +350,11 @@ function executeQuad(quad: Quadruple) {
       break;
 
     // STATEMENTS
+    case 'ASSIGN':
+      [leftVal] = getAddrValueAndType(isValid(left));
+      memory = getMemoryForAddr(isValid(res));
+      memory.setValue(res, String(leftVal));
+      break;
     case 'PRINT':
       [resVal] = getAddrValueAndType(isValid(res));
       console.log(resVal);
@@ -357,6 +363,20 @@ function executeQuad(quad: Quadruple) {
     // JUMPS
     case 'GOTO':
       tempNextIP = parseInt(isValid(res));
+      break;
+    case 'GOTOF':
+      [leftVal] = getAddrIntValue(isValid(left))
+      leftVal = transformIntToBool(leftVal)
+      if (!leftVal) {
+        tempNextIP = parseInt(isValid(res));
+      }
+      break;
+    case 'GOTOT':
+      [leftVal] = getAddrIntValue(isValid(left))
+      leftVal = transformIntToBool(leftVal)
+      if (leftVal) {
+        tempNextIP = parseInt(isValid(res));
+      }
       break;
 
     // END
