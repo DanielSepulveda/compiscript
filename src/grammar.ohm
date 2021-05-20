@@ -40,12 +40,14 @@ Compiscript {
           | "0"                                     -- zero
   float (a float) = integer "." decimalDigit* -- completeFloat
           | "." decimalDigit*                 -- decimalFloat
+  number = float | integer
+  signedNumber = "+" number | "-" number
   identifierStart = letter | "_"
   identifierPart = identifierStart | decimalDigit
   identifierName = identifierStart identifierPart*
   identifier (an identifier) = ~keyword identifierName
 
-  literal = string | float | integer
+  literal = string | signedNumber | number
 
   singleLineComment = "//" (~"\n" char)* &("\n" | end)
   multiLineComment = "/*" (~"*/" char)* "*/"

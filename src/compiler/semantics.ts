@@ -20,6 +20,12 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   float_decimalFloat(_1, _2) {
     return { value: this.sourceString, type: 'float' };
   },
+  signedNumber(sign, number) {
+    const s = sign.sourceString;
+    const n = number.applySemantics() as { value: string; type: VarTypes };
+
+    return { value: `${s}${n.value}`, type: n.type };
+  },
   identifier(_) {
     return this.sourceString;
   },
