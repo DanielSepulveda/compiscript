@@ -6,7 +6,7 @@ import * as vm from './vm/vm';
 
 require('dotenv').config();
 
-const name = 'testVm.txt';
+const name = 'patito.txt';
 
 const TESTING_DIR = path.join(__dirname, '/test/');
 const testFile = fs.readFileSync(TESTING_DIR + name).toString();

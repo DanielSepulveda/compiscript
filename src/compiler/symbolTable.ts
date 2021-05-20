@@ -13,7 +13,12 @@ import {
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
 import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
-import { jsonLog, jsonStringify } from '../utils/helpers';
+import {
+  jsonLog,
+  jsonStringify,
+  getVarScopeFromAddress,
+  getVarTypeFromVarScope,
+} from '../utils/helpers';
 import * as logger from './logger';
 
 /* -------------------------------------------------------------------------- */
@@ -249,8 +254,15 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims) {
   };
 }
 
-export function addFunctionParam(type: VarTypes) {
-  currentFunc.params.push(type);
+export function addFunctionParam(name: string) {
+  const currentVarTable = currentFunc.vars;
+
+  if (!currentVarTable)
+    throw new Error(`Internal error: ${currentFunc.name} var table is null`);
+
+  const paramAddr = currentVarTable[name].addr;
+
+  currentFunc.params.push(paramAddr);
 }
 
 /**
@@ -709,8 +721,15 @@ export function handleFuncCall(funcName: string) {
     argsStack.push([arg, argType, argAddr]);
   }
 
-  funcToCall.params.forEach((paramType, paramIndex) => {
+  funcToCall.params.forEach((paramAddr, paramIndex) => {
     const [arg, argType, argAddr] = safePop(argsStack);
+    const paramScope = getVarScopeFromAddress(paramAddr);
+
+    if (paramScope === null) {
+      throw new Error('Internal error: parameter has undefined paramScope');
+    }
+
+    const paramType = getVarTypeFromVarScope(paramScope);
 
     if (argType !== paramType) {
       throw new Error(
@@ -723,7 +742,7 @@ export function handleFuncCall(funcName: string) {
         op: 'PARAMETER',
         left: argAddr,
         right: '-1',
-        res: String(paramIndex),
+        res: String(paramAddr),
       },
       {
         leftOp: arg,
@@ -801,6 +820,8 @@ export function handleFuncReturn() {
 }
 
 export function handleEndMain() {
+  globalFunc.vars = null;
+
   addQuadruple({
     op: 'END',
     left: '-1',

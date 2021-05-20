@@ -385,7 +385,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     const type = paramType.applySemantics();
 
     symbolTable.addVar(name, type);
-    symbolTable.addFunctionParam(type);
+    symbolTable.addFunctionParam(name);
 
     return;
   },

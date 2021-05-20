@@ -71,7 +71,7 @@ export type Func = {
   name: string;
   returnType: Types;
   vars: Record<string, Var> | null;
-  params: VarTypes[];
+  params: number[];
   size: Record<LocalVarScope | TemporalVarScope | GlobalVarScope, number>;
   beginAddr?: number;
   isGlobal: boolean;

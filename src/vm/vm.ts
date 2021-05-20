@@ -360,20 +360,22 @@ function executeQuad(quad: Quadruple) {
       console.log(resVal);
       break;
 
+    // Functions
+
     // JUMPS
     case 'GOTO':
       tempNextIP = parseInt(isValid(res));
       break;
     case 'GOTOF':
-      [leftVal] = getAddrIntValue(isValid(left))
-      leftVal = transformIntToBool(leftVal)
+      [leftVal] = getAddrIntValue(isValid(left));
+      leftVal = transformIntToBool(leftVal);
       if (!leftVal) {
         tempNextIP = parseInt(isValid(res));
       }
       break;
     case 'GOTOT':
-      [leftVal] = getAddrIntValue(isValid(left))
-      leftVal = transformIntToBool(leftVal)
+      [leftVal] = getAddrIntValue(isValid(left));
+      leftVal = transformIntToBool(leftVal);
       if (leftVal) {
         tempNextIP = parseInt(isValid(res));
       }
