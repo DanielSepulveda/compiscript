@@ -36,59 +36,53 @@ const scopeRanges: ScopeRanges = {
 export type LoadInitialMemory = Partial<Record<VarTypes, number>>;
 export type MemoryValue = string | null;
 export type MemoryMap = Record<string, MemoryValue>;
-type MemoryType = keyof typeof scopeRanges;
+type MemoryScope = keyof typeof scopeRanges;
 
 class VmMemory {
-  private type: MemoryType;
+  private scope: MemoryScope;
 
-  private intMemory: MemoryMap | null = null;
-  private floatMemory: MemoryMap | null = null;
-  private stringMemory: MemoryMap | null = null;
+  private memory: Record<VarTypes, MemoryMap | null> = {
+    int: null,
+    float: null,
+    string: null,
+  };
+
   private allAddresses: string[] = [];
 
-  constructor(type: MemoryType, load: LoadInitialMemory = {}) {
-    this.type = type;
+  constructor(scope: MemoryScope, load: LoadInitialMemory = {}) {
+    this.scope = scope;
     if (!isEmpty(load)) {
       this.initMemory(load);
     }
   }
 
-  initMemory(load: LoadInitialMemory) {
-    const scopeRange = scopeRanges[this.type];
+  private initMemoryType(size: number, type: VarTypes) {
+    const baseAddr = scopeRanges[this.scope][type][0];
     let memCounter = 0;
     let addr = '';
+    let tempMemory: MemoryMap = {};
 
+    while (memCounter < size) {
+      addr = String(baseAddr + memCounter);
+      tempMemory[addr] = null;
+      this.allAddresses.push(addr);
+      memCounter++;
+    }
+
+    this.memory[type] = tempMemory;
+  }
+
+  initMemory(load: LoadInitialMemory) {
     if (load.int) {
-      this.intMemory = {};
-      while (memCounter < load.int) {
-        addr = String(scopeRange.int[0] + memCounter);
-        this.intMemory[addr] = null;
-        this.allAddresses.push(addr);
-        memCounter++;
-      }
-      memCounter = 0;
+      this.initMemoryType(load.int, 'int');
     }
 
     if (load.float) {
-      this.floatMemory = {};
-      while (memCounter < load.float) {
-        addr = String(scopeRange.float[0] + memCounter);
-        this.floatMemory[addr] = null;
-        this.allAddresses.push(addr);
-        memCounter++;
-      }
-      memCounter = 0;
+      this.initMemoryType(load.float, 'float');
     }
 
     if (load.string) {
-      this.stringMemory = {};
-      while (memCounter < load.string) {
-        addr = String(scopeRange.string[0] + memCounter);
-        this.stringMemory[addr] = null;
-        this.allAddresses.push(addr);
-        memCounter++;
-      }
-      memCounter = 0;
+      this.initMemoryType(load.string, 'string');
     }
   }
 
@@ -97,33 +91,33 @@ class VmMemory {
   }
 
   private setIntValue(addr: string, value: MemoryValue) {
-    if (this.intMemory === null) {
+    if (this.memory.int === null) {
       throw new Error(
         'Memory error: tried to set int value when int memory is null'
       );
     }
 
-    this.intMemory[addr] = value;
+    this.memory.int[addr] = value;
   }
 
   private setFloatValue(addr: string, value: MemoryValue) {
-    if (this.floatMemory === null) {
+    if (this.memory.float === null) {
       throw new Error(
         'Memory error: tried to set float value when float memory is null'
       );
     }
 
-    this.floatMemory[addr] = value;
+    this.memory.float[addr] = value;
   }
 
   private setStringValue(addr: string, value: MemoryValue) {
-    if (this.stringMemory === null) {
+    if (this.memory.string === null) {
       throw new Error(
         'Memory error: tried to set string value when string memory is null'
       );
     }
 
-    this.stringMemory[addr] = value;
+    this.memory.string[addr] = value;
   }
 
   private getVarTypeFromAddr(addr: string) {
@@ -171,33 +165,33 @@ class VmMemory {
   }
 
   private getIntValue(addr: string) {
-    if (this.intMemory === null) {
+    if (this.memory.int === null) {
       throw new Error(
         'Memory error: tried to get int value when int memory is null'
       );
     }
 
-    return this.intMemory[addr];
+    return this.memory.int[addr];
   }
 
   private getFloatValue(addr: string) {
-    if (this.floatMemory === null) {
+    if (this.memory.float === null) {
       throw new Error(
         'Memory error: tried to get float value when float memory is null'
       );
     }
 
-    return this.floatMemory[addr];
+    return this.memory.float[addr];
   }
 
   private getStringValue(addr: string) {
-    if (this.stringMemory === null) {
+    if (this.memory.string === null) {
       throw new Error(
         'Memory error: tried to get string value when string memory is null'
       );
     }
 
-    return this.stringMemory[addr];
+    return this.memory.string[addr];
   }
 
   getValue(addr: string) {
@@ -213,13 +207,7 @@ class VmMemory {
   }
 
   toJson() {
-    const output = {
-      int: this.intMemory,
-      float: this.floatMemory,
-      string: this.stringMemory,
-    };
-
-    return jsonStringify(output);
+    return jsonStringify(this.memory);
   }
 }
 
