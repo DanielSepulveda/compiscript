@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Stack } from 'mnemonist';
-import { findKey, invert, isEmpty, isUndefined, noop } from 'lodash';
-import VmMemory, { MemoryMap, MemoryValue } from './vmMemory';
+import { findKey, invert, isEmpty, noop } from 'lodash';
+import VmMemory, { MemoryMap } from './vmMemory';
 import {
   safeJsonParse,
   isValidCompilationData,
@@ -362,10 +362,13 @@ function executeQuad(quad: Quadruple) {
       break;
     case 'PRINT':
       [resVal] = getAddrValueAndType(isValid(res));
-      console.log(resVal);
+      process.stdout.write(String(resVal));
+      break;
+    case 'PRINTLN':
+      process.stdout.write('\n');
       break;
 
-    // Functions
+    // FUNCTIONS
     case 'ERA':
       func = funcDir[left];
       let newLocalMemory = new VmMemory('local', {
@@ -394,11 +397,13 @@ function executeQuad(quad: Quadruple) {
       }
       tempNextIP = parseInt(res);
       jumpsStack.push(instructionPointer + 1);
-      callStack.push(tempNewFrame!);
+      callStack.push(currentFrame);
       currentFrame = tempNewFrame!;
       tempNewFrame = null;
       break;
     case 'RETURN':
+      [leftVal] = getAddrValueAndType(isValid(left));
+      globalMemory.setValue(res, String(leftVal));
       break;
     case 'ENDFUNC':
       tempNextIP = safePop(jumpsStack);
@@ -458,8 +463,6 @@ export function execute() {
     console.log('Virtual machine terminated with an error');
     return;
   }
-
-  console.log('Virtual machine terminated successfully');
 }
 
 /* --------------------------------- LOGGER --------------------------------- */

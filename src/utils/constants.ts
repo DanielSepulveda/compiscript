@@ -41,6 +41,7 @@ export const QUADRUPLE_OPERATIONS: Record<
   print: 'PRINT',
   read: 'READ',
   return: 'RETURN',
+  println: 'PRINTLN',
 };
 
 export const RANGES: Record<VarScope, [number, number]> = {

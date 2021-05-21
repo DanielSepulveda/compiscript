@@ -17,6 +17,7 @@ Compiscript {
   if = "if"
   else = "else"
   print = "print"
+  println = "println"
   function = "function"
   return = "return"
   read = "read"
@@ -25,7 +26,7 @@ Compiscript {
   until = "until"
   type = "int" | "float" | "string"
   void = "void"
-  keyword = program | vars | if       | print   | type
+  keyword = program | vars | if       | println | print | type
             | else  | main | function | return  | read
             | while | for  | until    | void
 
@@ -118,6 +119,7 @@ Compiscript {
             | IfStatement
             | IterationStatement
             | ReadStatement
+            | PrintlnStatement
             | PrintStatement
             | ReturnStatement
   
@@ -134,6 +136,8 @@ Compiscript {
                       | for "(" AssignExpression ")" until "(" Expression ")" Block -- forDo
 
   ReadStatement = read "(" NonemptyListOf<ReadExpression, ","> ")" ";"
+
+  PrintlnStatement = println "(" NonemptyListOf<PrintExpression, ","> ")" ";"
 
   PrintStatement = print "(" NonemptyListOf<PrintExpression, ","> ")" ";"
 

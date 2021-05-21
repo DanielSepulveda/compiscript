@@ -12,9 +12,7 @@ const outputPath = path.join(__dirname, '..', 'out');
 const compile = (input: ohm.MatchResult) => {
   semantics(input).applySemantics();
 
-  if (process.env.NODE_ENV === 'development') {
-    logAll();
-  }
+  logAll();
 
   const output: CompilationOutput = {
     funcDir: symbolTable.internal.funcDir,

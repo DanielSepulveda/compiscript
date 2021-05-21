@@ -5,8 +5,8 @@ import { Var, Types, VarTypes } from '../types';
 import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {
-  string(_1, _2, _3) {
-    return { value: this.sourceString, type: 'string' };
+  string(_1, str, _3) {
+    return { value: str.sourceString, type: 'string' };
   },
   integer_nonZero(_1, _2) {
     return { value: this.sourceString, type: 'int' };
@@ -43,6 +43,8 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     if (symbolTable.internal.funcDir[id] === undefined) {
       throw new Error(`Error: function call on an undefined function '${id}'`);
     }
+
+    symbolTable.internal.stacks.operandStack.push('callFunc');
 
     args.asIteration().applySemantics();
 
@@ -366,6 +368,11 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   },
   PrintStatement(_1, _2, printExpressions, _3, _4) {
     printExpressions.asIteration().applySemantics();
+    return;
+  },
+  PrintlnStatement(_1, _2, printExpressions, _3, _4) {
+    printExpressions.asIteration().applySemantics();
+    symbolTable.performPrintLn();
     return;
   },
   ReturnStatement(_1, _2, expression, _3, _4) {

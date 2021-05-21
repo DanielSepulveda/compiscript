@@ -36,12 +36,13 @@ export type OperatorsLabels =
   | 'MULT'
   | 'DIV';
 
-export type ExtraOperators = '=' | 'read' | 'print' | 'return';
+export type ExtraOperators = '=' | 'read' | 'print' | 'return' | 'println';
 
 export type ExtraOperatorsLabels =
   | 'ASSIGN'
   | 'READ'
   | 'PRINT'
+  | 'PRINTLN'
   | 'RETURN'
   | 'GOTO'
   | 'GOTOT'

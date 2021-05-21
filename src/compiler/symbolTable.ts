@@ -480,6 +480,15 @@ export function performPrint() {
   );
 }
 
+export function performPrintLn() {
+  addQuadruple({
+    op: QUADRUPLE_OPERATIONS['println'],
+    left: '-1',
+    right: '-1',
+    res: '-1',
+  });
+}
+
 export function performRead(name: string) {
   const v = getVar(name);
 
@@ -687,18 +696,6 @@ export function handleBeginMain() {
 export function handleFuncCall(funcName: string) {
   const funcToCall = funcDir[funcName];
 
-  if (operandStack.size > funcToCall.params.length) {
-    throw new Error(
-      `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${operandStack.size}`
-    );
-  }
-
-  if (operandStack.size < funcToCall.params.length) {
-    throw new Error(
-      `Error: missing arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${operandStack.size}`
-    );
-  }
-
   addQuadruple({
     op: 'ERA',
     left: funcToCall.name,
@@ -706,44 +703,62 @@ export function handleFuncCall(funcName: string) {
     res: '-1',
   });
 
-  const argsStack = new Stack<[string, Types, string]>();
+  if (funcToCall.params.length) {
+    const argsStack = new Stack<[string, Types, string]>();
 
-  while (operandStack.size) {
-    const arg = safePop(operandStack);
-    const argType = safePop(typeStack);
-    const argAddr = safePop(addrStack);
+    while (operandStack.peek() !== 'callFunc') {
+      const arg = safePop(operandStack);
+      const argType = safePop(typeStack);
+      const argAddr = safePop(addrStack);
 
-    argsStack.push([arg, argType, argAddr]);
-  }
-
-  funcToCall.params.forEach((paramAddr, paramIndex) => {
-    const [arg, argType, argAddr] = safePop(argsStack);
-    const paramScope = getVarScopeFromAddress(paramAddr);
-
-    if (paramScope === null) {
-      throw new Error('Internal error: parameter has undefined paramScope');
+      argsStack.push([arg, argType, argAddr]);
     }
 
-    const paramType = getVarTypeFromVarScope(paramScope);
-
-    if (argType !== paramType) {
+    if (argsStack.size > funcToCall.params.length) {
       throw new Error(
-        `Error: param mismatch. '${funcToCall.name}' call sends an argument of type '${argType}' when it expects a '${paramType}' on parameter #${paramIndex}`
+        `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${operandStack.size}`
       );
     }
 
-    addQuadruple(
-      {
-        op: 'PARAMETER',
-        left: argAddr,
-        right: '-1',
-        res: String(paramAddr),
-      },
-      {
-        leftOp: arg,
+    if (argsStack.size < funcToCall.params.length) {
+      throw new Error(
+        `Error: missing arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${operandStack.size}`
+      );
+    }
+
+    funcToCall.params.forEach((paramAddr, paramIndex) => {
+      const [arg, argType, argAddr] = safePop(argsStack);
+      const paramScope = getVarScopeFromAddress(paramAddr);
+
+      if (paramScope === null) {
+        throw new Error('Internal error: parameter has undefined paramScope');
       }
-    );
-  });
+
+      const paramType = getVarTypeFromVarScope(paramScope);
+
+      if (argType !== paramType) {
+        throw new Error(
+          `Error: param mismatch. '${funcToCall.name}' call sends an argument of type '${argType}' when it expects a '${paramType}' on parameter #${paramIndex}`
+        );
+      }
+
+      addQuadruple(
+        {
+          op: 'PARAMETER',
+          left: argAddr,
+          right: '-1',
+          res: String(paramAddr),
+        },
+        {
+          leftOp: arg,
+        }
+      );
+    });
+  }
+
+  if (operandStack.peek() === 'callFunc') {
+    operandStack.pop();
+  }
 
   addQuadruple({
     op: 'GOSUB',
@@ -801,15 +816,23 @@ export function handleFuncReturn() {
     );
   }
 
+  if (globalFunc.vars === null) {
+    throw new Error('Internal error: global func var table is null');
+  }
+
+  const returnOperand = globalFunc.vars[currentFunc.name].name;
+  const returnAddr = globalFunc.vars[currentFunc.name].addr;
+
   addQuadruple(
     {
       op: 'RETURN',
-      left: '-1',
+      left: valueAddr,
       right: '-1',
-      res: valueAddr,
+      res: String(returnAddr),
     },
     {
-      resOp: valueOperand,
+      leftOp: valueOperand,
+      resOp: returnOperand,
     }
   );
 }

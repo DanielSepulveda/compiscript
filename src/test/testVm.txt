@@ -4,12 +4,21 @@ vars
   f: float;
   s: string;
 
-void function uno()
+void function log()
 {
   print("Dentro de la funcion uno");
 }
 
+int function sum(x: int)
+vars
+  res: int;
+{
+  res = x + i;
+  return(res);
+}
+
 main ()
 {
-  uno();
+  i = 10;
+  println("Operacion = ", sum(i / 2));
 }
