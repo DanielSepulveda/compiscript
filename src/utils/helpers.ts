@@ -9,6 +9,7 @@ import {
   LocalVarScope,
   VarTypes,
   Scope,
+  PointerTypes,
 } from '../types';
 import { RANGES } from '../utils/constants';
 
@@ -141,4 +142,28 @@ export function safePop<T>(stack: Stack<T>) {
   }
 
   return val;
+}
+
+export function getVarTypeFromPointerType(pointerType: PointerTypes): VarTypes {
+  if (pointerType === 'pointerInt') return 'int';
+  if (pointerType === 'pointerFloat') return 'float';
+  return 'string';
+}
+
+export function isTypePointer(
+  type: PointerTypes | VarTypes
+): type is PointerTypes {
+  return (
+    type === 'pointerInt' || type === 'pointerFloat' || type === 'pointerString'
+  );
+}
+
+export function isVariable(addr: number) {
+  const scope = getVarScopeFromAddress(addr);
+
+  if (scope === null) {
+    throw new Error(`Internal error: scope is null in 'isVariable' function`);
+  }
+
+  return isGlobalScope(scope) || isLocalScope(scope);
 }

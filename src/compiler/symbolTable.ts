@@ -9,6 +9,7 @@ import {
   OperationExpression,
   VarScope,
   FuncDir,
+  PointerTypes,
 } from '../types';
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
@@ -20,8 +21,12 @@ import {
   getVarScopeFromAddress,
   getVarTypeFromVarScope,
   safePop,
+  getVarTypeFromPointerType,
+  isTypePointer,
+  isVariable,
 } from '../utils/helpers';
 import * as logger from './logger';
+import { add } from 'lodash';
 
 /* -------------------------------------------------------------------------- */
 /*                                  Internals                                 */
@@ -46,7 +51,7 @@ const constants: Record<string, number> = {};
 
 const operatorStack = new Stack<Operators>();
 const operandStack = new Stack<string>();
-const typeStack = new Stack<VarTypes>();
+const typeStack = new Stack<VarTypes | PointerTypes>();
 const jumpsStack = new Stack<number>();
 const addrStack = new Stack<string>();
 
@@ -133,6 +138,7 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
       name,
       type,
       addr,
+      hasValue: true,
     };
   }
 }
@@ -198,6 +204,7 @@ function generateFunctionSize(): Func['size'] {
     localFloatTemporal: 0,
     localString: 0,
     localStringTemporal: 0,
+    pointer: 0,
   };
 }
 
@@ -207,40 +214,46 @@ function generateFunctionSize(): Func['size'] {
  * @param type
  * @param dims
  */
-export function addVar(name: string, type: VarTypes, dims?: VarDims) {
+export function addVar(name: string, type: VarTypes, dims?: VarDims[]) {
   const currentVarTable = currentFunc.vars;
 
   if (!currentVarTable)
     throw new Error(`Internal error: ${currentFunc.name} var table is null`);
 
   let addr;
-  let pointer: VarScope;
+  let scope: VarScope;
   if (currentFunc.isGlobal) {
     if (type === 'int') {
-      pointer = 'globalInt';
+      scope = 'globalInt';
     } else if (type === 'float') {
-      pointer = 'globalFloat';
+      scope = 'globalFloat';
     } else {
-      pointer = 'globalString';
+      scope = 'globalString';
     }
   } else {
     if (type === 'int') {
-      pointer = 'localInt';
+      scope = 'localInt';
     } else if (type === 'float') {
-      pointer = 'localFloat';
+      scope = 'localFloat';
     } else {
-      pointer = 'localString';
+      scope = 'localString';
     }
   }
 
-  addr = currentMemory!.getNextAddressFor(pointer);
-  currentFunc.size[pointer]++;
+  addr = currentMemory!.getNextAddressFor(scope);
+  currentFunc.size[scope]++;
+  if (dims) {
+    let size = dims.reduce((prev, curr) => prev * (parseInt(curr.sup) + 1), 1);
+    currentMemory!.sumCounterBy(scope, size - 1);
+    currentFunc.size[scope] += size - 1;
+  }
 
   currentVarTable[name] = {
     name,
     type,
     dims,
     addr,
+    hasValue: false,
   };
 }
 
@@ -277,6 +290,16 @@ export function getVar(name: string) {
   }
 
   return globalFunc.vars![name];
+}
+
+function markVarWithValue(name: string) {
+  const v = getVar(name);
+  v.hasValue = true;
+}
+
+function checkIfVarHasValue(name: string) {
+  const v = getVar(name);
+  return v.hasValue;
 }
 
 export function getNewTemp() {
@@ -380,12 +403,38 @@ export function performOperation() {
   }
 
   const rightOperand = safePop(operandStack);
-  const rightType = safePop(typeStack);
+  let rightType = safePop(typeStack);
   const rightAddr = safePop(addrStack);
 
+  if (isVariable(parseInt(rightAddr))) {
+    const hasValue = checkIfVarHasValue(rightOperand);
+    if (!hasValue) {
+      throw new Error(
+        `Error: variable ${rightOperand} was used before it was assigned a value.`
+      );
+    }
+  }
+
+  if (isTypePointer(rightType)) {
+    rightType = getVarTypeFromPointerType(rightType);
+  }
+
   const leftOperand = safePop(operandStack);
-  const leftType = safePop(typeStack);
+  let leftType = safePop(typeStack);
   const leftAddr = safePop(addrStack);
+
+  if (isVariable(parseInt(leftAddr))) {
+    const hasValue = checkIfVarHasValue(leftOperand);
+    if (!hasValue) {
+      throw new Error(
+        `Error: variable ${leftOperand} was used before it was assigned a value.`
+      );
+    }
+  }
+
+  if (isTypePointer(leftType)) {
+    leftType = getVarTypeFromPointerType(leftType);
+  }
 
   const resType = getOperationResultType({
     left: leftType,
@@ -395,17 +444,17 @@ export function performOperation() {
 
   const newTemp = getNewTemp();
   let resAddr: string;
+
   if (resType === 'int') {
     resAddr = String(currentMemory!.getNextAddressFor('localIntTemporal'));
+    currentFunc.size['localIntTemporal']++;
   } else if (resType === 'float') {
     resAddr = String(currentMemory!.getNextAddressFor('localFloatTemporal'));
+    currentFunc.size['localFloatTemporal']++;
   } else {
     resAddr = String(currentMemory!.getNextAddressFor('localStringTemporal'));
+    currentFunc.size['localStringTemporal']++;
   }
-
-  if (resType === 'int') currentFunc.size['localIntTemporal']++;
-  else if (resType === 'float') currentFunc.size['localFloatTemporal']++;
-  else currentFunc.size['localStringTemporal']++;
 
   addQuadruple(
     {
@@ -424,22 +473,43 @@ export function performOperation() {
 
 export function performAssign({ isReturn = false } = {}) {
   const valueOperand = safePop(operandStack);
-  const valueType = safePop(typeStack);
+  let valueType = safePop(typeStack);
   const valueAddr = safePop(addrStack);
 
+  if (isVariable(parseInt(valueAddr))) {
+    const hasValue = checkIfVarHasValue(valueOperand);
+    if (!hasValue) {
+      throw new Error(
+        `Error: variable ${valueOperand} was used before it was assigned a value.`
+      );
+    }
+  }
+
+  if (isTypePointer(valueType)) {
+    valueType = getVarTypeFromPointerType(valueType);
+  }
+
   const resOperand = safePop(operandStack);
-  const resType = safePop(typeStack);
+  let resType = safePop(typeStack);
   const resAddr = safePop(addrStack);
 
-  const canAssign = checkIfCanAssignType({
+  if (isTypePointer(resType)) {
+    resType = getVarTypeFromPointerType(resType);
+  }
+
+  const canAssignType = checkIfCanAssignType({
     variable: resType,
     value: valueType,
   });
 
-  if (!canAssign) {
+  if (!canAssignType) {
     throw new Error(
-      `Can't assign variable '${resOperand}' of type ${resType} value ${valueOperand} of type ${valueType}`
+      `Can't assign variable '${resOperand}' of type ${resType} value of type ${valueType}`
     );
+  }
+
+  if (isVariable(parseInt(resAddr))) {
+    markVarWithValue(resOperand);
   }
 
   addQuadruple(
@@ -491,6 +561,7 @@ export function performPrintLn() {
 
 export function performRead(name: string) {
   const v = getVar(name);
+  markVarWithValue(name);
 
   addQuadruple(
     {
@@ -509,7 +580,7 @@ export function validateConditionExpression() {
   const condType = typeStack.pop();
 
   if (!condType || condType !== 'int') {
-    console.log(
+    throw new Error(
       `Invalid conditional expression type. Expected type 'int' but got '${condType}'`
     );
   }
@@ -594,7 +665,7 @@ export function handleForAssign() {
 
   if (initialValueType !== iteratorType) {
     throw new Error(
-      `Can't assign variable '${iteratorOperand}' of type ${iteratorType} value ${initialValueOperand} of type ${initialValueType}`
+      `Can't assign variable '${iteratorOperand}' of type ${iteratorType} value of type ${initialValueType}`
     );
   }
 
@@ -631,7 +702,7 @@ export function handleForCompare(iteratorVarName: string) {
 
   if (expressionType !== iteratorVar.type) {
     throw new Error(
-      `Can't assign variable '${iteratorVar.name}' of type ${iteratorVar.type} value ${expressionOperand} of type ${expressionType}`
+      `Can't assign variable '${iteratorVar.name}' of type ${iteratorVar.type} value of type ${expressionType}`
     );
   }
 
@@ -708,8 +779,12 @@ export function handleFuncCall(funcName: string) {
 
     while (operandStack.peek() !== 'callFunc') {
       const arg = safePop(operandStack);
-      const argType = safePop(typeStack);
+      let argType = safePop(typeStack);
       const argAddr = safePop(addrStack);
+
+      if (isTypePointer(argType)) {
+        argType = getVarTypeFromPointerType(argType);
+      }
 
       argsStack.push([arg, argType, argAddr]);
     }
@@ -837,8 +912,162 @@ export function handleFuncReturn() {
   );
 }
 
+export function handleArrFirstDim(id: string) {
+  const valueOperand = safePop(operandStack);
+  const valueType = safePop(typeStack);
+  const valueAddr = safePop(addrStack);
+
+  if (valueType !== 'int') {
+    throw new Error(`Error: arrays must be indexed using only 'int' values`);
+  }
+
+  const varInfo = getVar(id);
+  if (!varInfo.dims?.length) {
+    throw new Error(`Error: tried to index a variable that is not an array`);
+  }
+  const firstDim = varInfo.dims[0];
+
+  addQuadruple(
+    {
+      op: 'VERIFY',
+      left: valueAddr,
+      right: firstDim.inf,
+      res: firstDim.sup,
+    },
+    {
+      leftOp: valueOperand,
+    }
+  );
+
+  if (firstDim.m !== '0') {
+    const newTemp = getNewTemp();
+    const resAddr = String(
+      currentMemory!.getNextAddressFor('localIntTemporal')
+    );
+    currentFunc.size['localIntTemporal']++;
+
+    addQuadruple(
+      {
+        op: 'MULT',
+        left: valueAddr,
+        right: firstDim.m,
+        res: resAddr,
+      },
+      {
+        leftOp: valueOperand,
+        resOp: newTemp,
+      }
+    );
+
+    operandStack.push(newTemp);
+    addrStack.push(resAddr);
+    typeStack.push('int');
+  } else {
+    operandStack.push(valueOperand);
+    addrStack.push(valueAddr);
+    typeStack.push('int');
+  }
+}
+
+export function handleArrSecondDim(id: string) {
+  const valueOperand = safePop(operandStack);
+  const valueType = safePop(typeStack);
+  const valueAddr = safePop(addrStack);
+
+  if (valueType !== 'int') {
+    throw new Error(`Error: arrays must be indexed using only 'int' values`);
+  }
+
+  const varInfo = getVar(id);
+  if (!varInfo.dims?.length) {
+    throw new Error(`Error: tried to index a variable that is not an array`);
+  }
+  const secondDim = varInfo.dims[1];
+
+  addQuadruple(
+    {
+      op: 'VERIFY',
+      left: valueAddr,
+      right: secondDim.inf,
+      res: secondDim.sup,
+    },
+    {
+      leftOp: valueOperand,
+    }
+  );
+
+  const offsetOperand = safePop(operandStack);
+  const offsetType = safePop(typeStack);
+  const offsetAddr = safePop(addrStack);
+
+  const newTemp = getNewTemp();
+  const resAddr = String(currentMemory!.getNextAddressFor('localIntTemporal'));
+  currentFunc.size['localIntTemporal']++;
+
+  addQuadruple(
+    {
+      op: 'SUM',
+      left: offsetAddr,
+      right: valueAddr,
+      res: resAddr,
+    },
+    {
+      leftOp: offsetOperand,
+      rightOp: valueOperand,
+      resOp: newTemp,
+    }
+  );
+
+  operandStack.push(newTemp);
+  addrStack.push(resAddr);
+  typeStack.push('int');
+}
+
+export function handleSumArrDirBase(id: string) {
+  const valueOperand = safePop(operandStack);
+  const valueType = safePop(typeStack);
+  const valueAddr = safePop(addrStack);
+
+  if (valueType !== 'int') {
+    throw new Error(`Error: arrays must be indexed using only 'int' values`);
+  }
+
+  const varInfo = getVar(id);
+  if (!varInfo.dims?.length) {
+    throw new Error(`Error: tried to index a variable that is not an array`);
+  }
+
+  const newTemp = getNewTemp();
+  const resAddr = String(currentMemory!.getNextAddressFor('pointer'));
+  currentFunc.size['pointer']++;
+
+  addQuadruple(
+    {
+      op: 'SUM',
+      left: valueAddr,
+      right: String(varInfo.addr),
+      res: resAddr,
+    },
+    {
+      leftOp: valueOperand,
+      rightOp: varInfo.name,
+      resOp: newTemp,
+    }
+  );
+
+  operandStack.push(newTemp);
+  addrStack.push(resAddr);
+  if (varInfo.type === 'int') {
+    typeStack.push('pointerInt');
+  } else if (varInfo.type === 'float') {
+    typeStack.push('pointerFloat');
+  } else {
+    typeStack.push('pointerString');
+  }
+}
+
 export function handleEndMain() {
-  globalFunc.vars = null;
+  // globalFunc.vars = null;
 
   addQuadruple({
     op: 'END',

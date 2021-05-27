@@ -1,8 +1,8 @@
 import grammar from '../grammar';
 import * as symbolTable from './symbolTable';
 import { jsonLog } from '../utils/helpers';
-import { Var, Types, VarTypes } from '../types';
-import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
+import { Var, VarTypes, VarDims } from '../types';
+import { OPERATORS } from '../utils/constants';
 
 const s = grammar.createSemantics().addOperation('applySemantics', {
   string(_1, str, _3) {
@@ -37,6 +37,21 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   /*                                 Expressions                                */
   /* -------------------------------------------------------------------------- */
 
+  ArrayExpression(identifier, _1, exp1, _2, _3, exp2, _4) {
+    const name = identifier.applySemantics();
+
+    exp1.applySemantics();
+    symbolTable.handleArrFirstDim(name);
+
+    if (exp2.sourceString !== '') {
+      exp2.applySemantics();
+      symbolTable.handleArrSecondDim(name);
+    }
+
+    symbolTable.handleSumArrDirBase(name);
+
+    return;
+  },
   CallExpression(identifier, _1, args, _2) {
     const id = identifier.applySemantics();
 
@@ -54,6 +69,10 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   },
 
   /* --------------------------- Primary expression --------------------------- */
+  PrimaryExpression_arrExp(arrExp) {
+    arrExp.applySemantics();
+    return;
+  },
   PrimaryExpression_callExp(callExpression) {
     callExpression.applySemantics();
     return;
@@ -240,24 +259,20 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     orExpression.applySemantics();
     return;
   },
-  Dimension(_1, dim1, _2, dim2, _3) {
-    const d1 = dim1.applySemantics();
-    let d2 = null;
-    if (dim2.children.length > 0) {
-      d2 = dim2.children[0].applySemantics();
-    }
-    return { d1, d2 };
-  },
-  VariableExpression(identifier, dimension) {
-    const name = identifier.applySemantics();
-    const dims = dimension.applySemantics();
+  VariableExpression_varId(id) {
+    const name = id.applySemantics();
 
-    return { name, dims: dims.length ? dims[0] : null };
+    symbolTable.pushIdOperand(name);
+
+    return;
+  },
+  VariableExpression_varArr(arrExp) {
+    arrExp.applySemantics();
+
+    return;
   },
   AssignExpression(variableExpression, _1, expression) {
-    const v = variableExpression.applySemantics() as Omit<Var, 'type'>;
-
-    symbolTable.pushIdOperand(v.name);
+    variableExpression.applySemantics();
 
     expression.applySemantics();
 
@@ -279,9 +294,44 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   /* -------------------------------------------------------------------------- */
   /*                                 Statements                                 */
   /* -------------------------------------------------------------------------- */
+  Dimension(_1, dimension1, _2, _3, dimemsion2, _4) {
+    const d1 = dimension1.applySemantics();
+    const d1Num = parseInt(d1);
+    const dim1: VarDims = {
+      inf: '0',
+      sup: String(d1Num - 1),
+      m: '0',
+    };
 
-  VariableStatement(varExprs, _1, type, _2) {
-    const vars = varExprs.asIteration().applySemantics() as Omit<Var, 'type'>[];
+    let dim2: VarDims | null = null;
+    if (dimemsion2.children.length > 0) {
+      const d2 = dimemsion2.children[0].applySemantics();
+      const d2Num = parseInt(d2);
+      dim2 = {
+        inf: '0',
+        sup: String(d2Num - 1),
+        m: '0',
+      };
+      dim1.m = String(d2Num);
+    }
+
+    return [dim1, dim2];
+  },
+  VariableDeclaration(identifier, dimension) {
+    const name = identifier.applySemantics();
+    const dimensions = dimension.applySemantics();
+
+    const dims = [];
+    if (dimensions.length) {
+      for (let d of dimensions[0] as Array<VarDims | null>) {
+        if (d !== null) dims.push(d);
+      }
+    }
+
+    return { name, dims: dims.length ? dims : undefined };
+  },
+  VariableStatement(varDecs, _1, type, _2) {
+    const vars = varDecs.asIteration().applySemantics() as Omit<Var, 'type'>[];
     const varType = type.applySemantics();
 
     vars.forEach((v) => {
@@ -294,7 +344,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
 
     return { vars, type: varType };
   },
-  VarDeclaration(_1, variableStatments) {
+  VarBlock(_1, variableStatments) {
     return variableStatments.applySemantics();
   },
   Statement(statement) {

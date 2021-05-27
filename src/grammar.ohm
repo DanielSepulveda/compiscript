@@ -100,8 +100,8 @@ Compiscript {
   
   Expression = OrExpression
 
-  Dimension = "[" decimalDigit ("," decimalDigit)? "]"
-  VariableExpression = identifier Dimension?
+  VariableExpression = ArrayExpression -- varArr
+                      | identifier -- varId 
 
   AssignExpression = VariableExpression "=" Expression
 
@@ -111,8 +111,10 @@ Compiscript {
 
 /* ------------------------------- Statements ------------------------------- */
 
-  VariableStatement = NonemptyListOf<VariableExpression, ","> ":" type ";"
-  VarDeclaration = "vars" VariableStatement+
+  Dimension = "[" decimalDigit+ "]" ("[" decimalDigit+ "]")?
+  VariableDeclaration = identifier Dimension?
+  VariableStatement = NonemptyListOf<VariableDeclaration, ","> ":" type ";"
+  VarBlock = "vars" VariableStatement+
 
   Statement = AssigmentStatement
             | CallStatement
@@ -148,7 +150,7 @@ Compiscript {
   FunctionParam = identifier ":" type
   FunctionParams = ListOf<FunctionParam, ",">
   FunctionDeclaration = functionType function identifier "(" FunctionParams ")"
-  FunctionStatement = FunctionDeclaration VarDeclaration? Block
+  FunctionStatement = FunctionDeclaration VarBlock? Block
 
   MainStatement = main "(" ")" Block
 
@@ -156,5 +158,5 @@ Compiscript {
 /*                                   Program                                  */
 /* -------------------------------------------------------------------------- */
 
-  Program = program identifier ";" VarDeclaration? FunctionStatement* MainStatement
+  Program = program identifier ";" VarBlock? FunctionStatement* MainStatement
 }

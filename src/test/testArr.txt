@@ -1,0 +1,15 @@
+Program helloWorld;
+vars
+  i, j: int;
+  v[3]: float;
+  m[2][5]: int;
+  a[5]: int;
+  p: int;
+  f: float;
+
+main ()
+{
+  i = 1;
+  j = 1;
+  p = m[i * j][a[i + j] * i] + i;
+}

@@ -1,5 +1,7 @@
 import VmMemory from './vm/vmMemory';
 
+export type PointerTypes = 'pointerInt' | 'pointerFloat' | 'pointerString';
+
 export type VarTypes = 'int' | 'float' | 'string';
 
 export type Types = VarTypes | 'void';
@@ -51,21 +53,24 @@ export type ExtraOperatorsLabels =
   | 'ERA'
   | 'PARAMETER'
   | 'GOSUB'
-  | 'END';
+  | 'END'
+  | 'VERIFY';
 
 export type QuadrupleOperations = Operators | ExtraOperators;
 export type QuadrupleOperationsLabels = OperatorsLabels | ExtraOperatorsLabels;
 
 export type VarDims = {
-  d1: string;
-  d2?: string;
+  inf: string;
+  sup: string;
+  m: string;
 };
 
 export type Var = {
   name: string;
   type: VarTypes;
-  dims?: VarDims;
+  dims?: VarDims[];
   addr: number;
+  hasValue: boolean;
 };
 
 export type Func = {
@@ -73,7 +78,10 @@ export type Func = {
   returnType: Types;
   vars: Record<string, Var> | null;
   params: number[];
-  size: Record<LocalVarScope | TemporalVarScope | GlobalVarScope, number>;
+  size: Record<
+    LocalVarScope | TemporalVarScope | GlobalVarScope | PointerScope,
+    number
+  >;
   beginAddr?: number;
   isGlobal: boolean;
 };
@@ -102,11 +110,13 @@ export type ConstantVarScope =
   | 'constantInt'
   | 'constantFloat'
   | 'constantString';
+export type PointerScope = 'pointer';
 export type VarScope =
   | GlobalVarScope
   | LocalVarScope
   | TemporalVarScope
-  | ConstantVarScope;
+  | ConstantVarScope
+  | PointerScope;
 
 export type CompilationOutput = {
   funcDir: Record<string, Func>;
