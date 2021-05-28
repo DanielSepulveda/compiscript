@@ -1,6 +1,6 @@
 {
   "name": "@danielsepulveda/compiscript",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "",
   "scripts": {
     "start": "ts-node ./test.ts",

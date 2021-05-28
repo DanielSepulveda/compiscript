@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.0.0](https://github.com/DanielSepulveda/compiscript/compare/v2.0.0...v6.0.0) (2021-05-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **functions:** generate intermediate code for functions and handle compilation memory (#10)
+* bump version (#9)
+* bump to new version (#7)
+
+### Features
+
+* **build:** separate dev and build tsconfigs ([16149b5](https://github.com/DanielSepulveda/compiscript/commit/16149b5eefc659b6f73df739afb2391be3eb679e))
+* array execution and vm tests ([582c4e6](https://github.com/DanielSepulveda/compiscript/commit/582c4e6edffc79f5c3708f20f5cbff410255cbcd))
+* compile arrays ([fb583d3](https://github.com/DanielSepulveda/compiscript/commit/fb583d3e53945193935fb5cb320743a3739be625))
+* use babel to build compiler ([0b5f41f](https://github.com/DanielSepulveda/compiscript/commit/0b5f41fb29c71634a5d9bb5b9e195058c96a9c84))
+* **compiler:** add print line command ([137671b](https://github.com/DanielSepulveda/compiscript/commit/137671becdee6560fb79dfd4007ca8475508b699))
+* **compiler:** create obj file when compilation succeeds ([d4f72cf](https://github.com/DanielSepulveda/compiscript/commit/d4f72cfb76c198a407d746b2c2bfaa6518574c55))
+* **compiler:** let int values be assigned to float variables ([e97975b](https://github.com/DanielSepulveda/compiscript/commit/e97975b05651885df3ec03a5662c03498796bc4b))
+* **compiler:** store params addr in func param list instead of index ([dc92806](https://github.com/DanielSepulveda/compiscript/commit/dc92806ea994b9616e2c8798b15eed89db4f3be9))
+* **for:** generate quadruples for 'for' statements ([55340c9](https://github.com/DanielSepulveda/compiscript/commit/55340c981d311b547f2ba6cb2be7da9d92d99606))
+* **functions:** generate intermediate code for functions and handle compilation memory ([#10](https://github.com/DanielSepulveda/compiscript/issues/10)) ([0d08481](https://github.com/DanielSepulveda/compiscript/commit/0d084815bc0916c9d3c4576f4e17b947369e87fe))
+* **grammar:** handle negative numbers ([70258d1](https://github.com/DanielSepulveda/compiscript/commit/70258d11fee56ade10933fbb164ae083c690b817))
+* **ifs:** generate quadruples for if statements ([876db54](https://github.com/DanielSepulveda/compiscript/commit/876db54b1f793093ae2ec209c61335ad47a7e74c))
+* **quadruplets:** basic quadruplets generation for simple expressions ([30b10e2](https://github.com/DanielSepulveda/compiscript/commit/30b10e24d342a375b573055159cfad77037a9be7))
+* **quadruplets:** generate assigment expresions quadruplets ([efec802](https://github.com/DanielSepulveda/compiscript/commit/efec802883104e9d133bc9ce42f248d9892199be))
+* **quadruplets:** generate parenthesis expresions quadruplets ([2854e7e](https://github.com/DanielSepulveda/compiscript/commit/2854e7e3f7534588eee6cafb2fae0c898720af18))
+* **quadruplets:** generate print  expresions quadruplets ([1c19d96](https://github.com/DanielSepulveda/compiscript/commit/1c19d967899d6cc11d75a810cd39a1b55fda3f99))
+* **quadruplets:** generate read expresions quadruplets ([63a1c92](https://github.com/DanielSepulveda/compiscript/commit/63a1c92179286d1370adc678f09ee737d511d089))
+* **semantics:** semantic cube first version ([#5](https://github.com/DanielSepulveda/compiscript/issues/5)) ([8c53a86](https://github.com/DanielSepulveda/compiscript/commit/8c53a8674c7a7297bcc4a681f1a59e9ac869820c))
+* **vm:** basic execution of defined functions ([6e2b1a6](https://github.com/DanielSepulveda/compiscript/commit/6e2b1a63177070c69c7fe9474d6ce0fca53d8f78))
+* **vm:** create VmMemory class and load compilation output ([b0ccac8](https://github.com/DanielSepulveda/compiscript/commit/b0ccac872f3c09f027673cb1ad672ac4449f6c31))
+* **vm:** execute basic expressions ([bf16f22](https://github.com/DanielSepulveda/compiscript/commit/bf16f225a5a60b473cd081aa6e275b1771b401a3))
+* **vm:** execution of non-sequential statements ([e8c0ec4](https://github.com/DanielSepulveda/compiscript/commit/e8c0ec45f6112474b6a49380d3bfb9b2d3e3f731))
+* **vm:** first version of vm execution of basic commands ([8b4b02f](https://github.com/DanielSepulveda/compiscript/commit/8b4b02f3e0fd52316162f323c32f75ac93113a65))
+* **vm:** init global and constant memory from compilation output ([e63edce](https://github.com/DanielSepulveda/compiscript/commit/e63edce15def9211e2ef3541c79548bda5a027f8))
+* bump to new version ([#7](https://github.com/DanielSepulveda/compiscript/issues/7)) ([244fa3c](https://github.com/DanielSepulveda/compiscript/commit/244fa3c0029f98880c695dbec3455ab571196c9c))
+* bump version ([#9](https://github.com/DanielSepulveda/compiscript/issues/9)) ([08d86d0](https://github.com/DanielSepulveda/compiscript/commit/08d86d0b263206f017cbe27efef1cab12f350cf4))
+* **while:** generate quadruples for while statements ([7dcc73e](https://github.com/DanielSepulveda/compiscript/commit/7dcc73e16330d8d7c5a39917e7ad12a5b2a1438d))
+
 ## [5.0.0](https://github.com/DanielSepulveda/compiscript/compare/v4.0.0...v5.0.0) (2021-05-16)
 
 
