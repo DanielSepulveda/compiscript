@@ -1,6 +1,6 @@
 {
   "watch": ["src/"],
   "ignore": ["node_modules/", "./src/logs/", "./src/out/"],
-  "exec": "ts-node ./server.js",
+  "exec": "ts-node ./test.ts",
   "ext": "json,ts,txt,ohm"
 }

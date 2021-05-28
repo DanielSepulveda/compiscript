@@ -3,14 +3,14 @@
   "version": "5.0.0",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node ./server.js",
+    "start": "ts-node ./test.ts",
     "dev": "nodemon",
     "prebuild": "rimraf dist",
     "build": "concurrently yarn:build:*",
     "build:cjs": "cross-env BABEL_ENV=cjs babel src --root-mode upward --extensions .ts,.tsx -d dist/cjs --source-maps --copy-files",
     "build:esm": "cross-env BABEL_ENV=esm babel src --root-mode upward --extensions .ts,.tsx -d dist/esm --source-maps --copy-files",
-    "build:types": "tsc --declarationDir dist/types",
+    "build:types": "tsc --declarationDir dist/types --project tsconfig.build.json",
+    "start:build": "node ./server.js",
     "release": "standard-version"
   },
   "main": "dist/cjs/index.js",
