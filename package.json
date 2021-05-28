@@ -1,13 +1,26 @@
 {
-  "name": "tarea-3.2",
+  "name": "@danielsepulveda/compiscript",
   "version": "5.0.0",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node ./server.ts",
+    "start": "ts-node ./server.js",
     "dev": "nodemon",
+    "prebuild": "rimraf dist",
+    "build": "concurrently yarn:build:*",
+    "build:cjs": "cross-env BABEL_ENV=cjs babel src --root-mode upward --extensions .ts,.tsx -d dist/cjs --source-maps --copy-files",
+    "build:esm": "cross-env BABEL_ENV=esm babel src --root-mode upward --extensions .ts,.tsx -d dist/esm --source-maps --copy-files",
+    "build:types": "tsc --declarationDir dist/types",
     "release": "standard-version"
   },
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "types": "dist/types/index.d.ts",
+  "typings": "dist/types/index.d.ts",
   "author": "Daniel Sepulveda",
   "license": "ISC",
   "dependencies": {
@@ -16,19 +29,35 @@
     "ohm-js": "^15.4.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.14.3",
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-typescript": "^7.13.0",
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "@rollup/plugin-typescript": "^8.2.1",
     "@types/figlet": "^1.2.1",
     "@types/lodash": "^4.14.169",
     "@types/node": "^14.14.32",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.2.2",
+    "concurrently": "^6.2.0",
+    "cross-env": "^7.0.3",
     "dotenv": "^10.0.0",
     "eslint": "^7.21.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
     "nodemon": "^2.0.7",
     "prettier": "^2.2.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.50.2",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-typescript2": "^0.30.0",
     "standard-version": "^9.3.0",
     "ts-node": "^9.1.1",
+    "tslib": "^2.2.0",
     "typescript": "^4.2.3"
   }
 }
