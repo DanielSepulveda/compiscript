@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as symbolTable from './symbolTable';
 import { jsonLog, jsonStringify } from '../utils/helpers';
 
-const logPath = path.join(__dirname, '..', 'logs');
+const logPath = path.join(__dirname, '..', '..', 'logs');
 
 export const logFuncDir = () => {
   fs.writeFileSync(

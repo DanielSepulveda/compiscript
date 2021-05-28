@@ -7,12 +7,12 @@ import * as symbolTable from './symbolTable';
 import { jsonLog, jsonStringify } from '../utils/helpers';
 import { CompilationOutput } from '../types';
 
-const outputPath = path.join(__dirname, '..', 'out');
+// const outputPath = path.join(__dirname, '..', 'out');
 
 const compile = (input: ohm.MatchResult) => {
   semantics(input).applySemantics();
 
-  logAll();
+  // logAll();
 
   const output: CompilationOutput = {
     funcDir: symbolTable.internal.funcDir,
@@ -20,9 +20,9 @@ const compile = (input: ohm.MatchResult) => {
     constants: symbolTable.internal.constants,
   };
 
-  return output;
-
   // fs.writeFileSync(path.join(outputPath, 'obj.txt'), jsonStringify(output));
+
+  return output;
 };
 
 export default compile;

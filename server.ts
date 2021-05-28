@@ -1,19 +1,19 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import compile from './compiler';
-import { logAll } from './compiler/logger';
-import parse from './parser';
-import * as vm from './vm/vm';
+import compile from './src/compiler';
+import { logAll } from './src/compiler/logger';
+import parse from './src/parser';
+import * as vm from './src/vm';
 
 require('dotenv').config();
 
 const name = 'testVm.txt';
 
 const TESTING_DIR = path.join(__dirname, '/test/');
-const testFile = fs.readFileSync(TESTING_DIR + name).toString();
+const input = fs.readFileSync(TESTING_DIR + name).toString();
 
 try {
-  const parsed = parse(testFile);
+  const parsed = parse(input);
   const compiled = compile(parsed);
   vm.init(compiled);
   vm.execute();

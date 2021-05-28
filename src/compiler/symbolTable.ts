@@ -1062,7 +1062,7 @@ export function handleSumArrDirBase(id: string) {
 }
 
 export function handleEndMain() {
-  // globalFunc.vars = null;
+  globalFunc.vars = null;
 
   addQuadruple({
     op: 'END',
