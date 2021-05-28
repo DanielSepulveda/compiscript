@@ -1,14 +1,12 @@
 import VmMemory from './vm/vmMemory';
 
-export type PointerTypes = 'pointerInt' | 'pointerFloat' | 'pointerString';
-
 export type VarTypes = 'int' | 'float' | 'string';
 
 export type Types = VarTypes | 'void';
 
 export type OperandResultTypes = VarTypes | 'error';
 
-export type Scope = 'global' | 'local' | 'temporal' | 'constant';
+export type Scope = 'global' | 'local' | 'temporal' | 'constant' | 'pointer';
 
 export type Operators =
   | 'or'
@@ -110,7 +108,7 @@ export type ConstantVarScope =
   | 'constantInt'
   | 'constantFloat'
   | 'constantString';
-export type PointerScope = 'pointer';
+export type PointerScope = 'pointerInt' | 'pointerFloat' | 'pointerString';
 export type VarScope =
   | GlobalVarScope
   | LocalVarScope
@@ -135,5 +133,6 @@ export type ExecutionStatus = 'idle' | 'executing' | 'success' | 'error';
 export type CallFrame = {
   localMemory: VmMemory;
   temporalMemory: VmMemory;
+  pointerMemory: VmMemory;
   func: Func;
 };

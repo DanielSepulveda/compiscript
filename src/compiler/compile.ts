@@ -20,7 +20,9 @@ const compile = (input: ohm.MatchResult) => {
     constants: symbolTable.internal.constants,
   };
 
-  fs.writeFileSync(path.join(outputPath, 'obj.txt'), jsonStringify(output));
+  return output;
+
+  // fs.writeFileSync(path.join(outputPath, 'obj.txt'), jsonStringify(output));
 };
 
 export default compile;

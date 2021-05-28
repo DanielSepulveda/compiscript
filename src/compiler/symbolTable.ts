@@ -9,7 +9,7 @@ import {
   OperationExpression,
   VarScope,
   FuncDir,
-  PointerTypes,
+  PointerScope,
 } from '../types';
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
@@ -21,8 +21,6 @@ import {
   getVarScopeFromAddress,
   getVarTypeFromVarScope,
   safePop,
-  getVarTypeFromPointerType,
-  isTypePointer,
   isVariable,
 } from '../utils/helpers';
 import * as logger from './logger';
@@ -51,7 +49,7 @@ const constants: Record<string, number> = {};
 
 const operatorStack = new Stack<Operators>();
 const operandStack = new Stack<string>();
-const typeStack = new Stack<VarTypes | PointerTypes>();
+const typeStack = new Stack<VarTypes>();
 const jumpsStack = new Stack<number>();
 const addrStack = new Stack<string>();
 
@@ -204,7 +202,9 @@ function generateFunctionSize(): Func['size'] {
     localFloatTemporal: 0,
     localString: 0,
     localStringTemporal: 0,
-    pointer: 0,
+    pointerInt: 0,
+    pointerFloat: 0,
+    pointerString: 0,
   };
 }
 
@@ -326,9 +326,9 @@ export function pushIdOperand(name: string) {
   typeStack.push(operand.type);
 }
 
-export function pushLiteralOperand(name: string, type: VarTypes) {
-  // Register operand in constants memory
+export function declareConstant(name: string, type: VarTypes) {
   let constantAddr: number;
+
   const isConstantInMemory = constants[name] !== undefined;
   if (!isConstantInMemory) {
     if (type === 'int') {
@@ -342,6 +342,12 @@ export function pushLiteralOperand(name: string, type: VarTypes) {
   } else {
     constantAddr = constants[name];
   }
+
+  return constantAddr;
+}
+
+export function pushLiteralOperand(name: string, type: VarTypes) {
+  const constantAddr = declareConstant(name, type);
 
   operandStack.push(name);
   addrStack.push(String(constantAddr));
@@ -403,38 +409,31 @@ export function performOperation() {
   }
 
   const rightOperand = safePop(operandStack);
-  let rightType = safePop(typeStack);
+  const rightType = safePop(typeStack);
   const rightAddr = safePop(addrStack);
 
-  if (isVariable(parseInt(rightAddr))) {
-    const hasValue = checkIfVarHasValue(rightOperand);
-    if (!hasValue) {
-      throw new Error(
-        `Error: variable ${rightOperand} was used before it was assigned a value.`
-      );
-    }
-  }
-
-  if (isTypePointer(rightType)) {
-    rightType = getVarTypeFromPointerType(rightType);
-  }
+  // Mejor hacer en vm
+  // if (isVariable(parseInt(rightAddr))) {
+  //   const hasValue = checkIfVarHasValue(rightOperand);
+  //   if (!hasValue) {
+  //     throw new Error(
+  //       `Error: variable ${rightOperand} was used before it was assigned a value.`
+  //     );
+  //   }
+  // }
 
   const leftOperand = safePop(operandStack);
-  let leftType = safePop(typeStack);
+  const leftType = safePop(typeStack);
   const leftAddr = safePop(addrStack);
 
-  if (isVariable(parseInt(leftAddr))) {
-    const hasValue = checkIfVarHasValue(leftOperand);
-    if (!hasValue) {
-      throw new Error(
-        `Error: variable ${leftOperand} was used before it was assigned a value.`
-      );
-    }
-  }
-
-  if (isTypePointer(leftType)) {
-    leftType = getVarTypeFromPointerType(leftType);
-  }
+  // if (isVariable(parseInt(leftAddr))) {
+  //   const hasValue = checkIfVarHasValue(leftOperand);
+  //   if (!hasValue) {
+  //     throw new Error(
+  //       `Error: variable ${leftOperand} was used before it was assigned a value.`
+  //     );
+  //   }
+  // }
 
   const resType = getOperationResultType({
     left: leftType,
@@ -473,29 +472,21 @@ export function performOperation() {
 
 export function performAssign({ isReturn = false } = {}) {
   const valueOperand = safePop(operandStack);
-  let valueType = safePop(typeStack);
+  const valueType = safePop(typeStack);
   const valueAddr = safePop(addrStack);
 
-  if (isVariable(parseInt(valueAddr))) {
-    const hasValue = checkIfVarHasValue(valueOperand);
-    if (!hasValue) {
-      throw new Error(
-        `Error: variable ${valueOperand} was used before it was assigned a value.`
-      );
-    }
-  }
-
-  if (isTypePointer(valueType)) {
-    valueType = getVarTypeFromPointerType(valueType);
-  }
+  // if (isVariable(parseInt(valueAddr))) {
+  //   const hasValue = checkIfVarHasValue(valueOperand);
+  //   if (!hasValue) {
+  //     throw new Error(
+  //       `Error: variable ${valueOperand} was used before it was assigned a value.`
+  //     );
+  //   }
+  // }
 
   const resOperand = safePop(operandStack);
-  let resType = safePop(typeStack);
+  const resType = safePop(typeStack);
   const resAddr = safePop(addrStack);
-
-  if (isTypePointer(resType)) {
-    resType = getVarTypeFromPointerType(resType);
-  }
 
   const canAssignType = checkIfCanAssignType({
     variable: resType,
@@ -779,12 +770,8 @@ export function handleFuncCall(funcName: string) {
 
     while (operandStack.peek() !== 'callFunc') {
       const arg = safePop(operandStack);
-      let argType = safePop(typeStack);
+      const argType = safePop(typeStack);
       const argAddr = safePop(addrStack);
-
-      if (isTypePointer(argType)) {
-        argType = getVarTypeFromPointerType(argType);
-      }
 
       argsStack.push([arg, argType, argAddr]);
     }
@@ -946,15 +933,18 @@ export function handleArrFirstDim(id: string) {
     );
     currentFunc.size['localIntTemporal']++;
 
+    const constantAddr = declareConstant(firstDim.m, 'int');
+
     addQuadruple(
       {
         op: 'MULT',
         left: valueAddr,
-        right: firstDim.m,
+        right: String(constantAddr),
         res: resAddr,
       },
       {
         leftOp: valueOperand,
+        rightOp: firstDim.m,
         resOp: newTemp,
       }
     );
@@ -1037,16 +1027,27 @@ export function handleSumArrDirBase(id: string) {
     throw new Error(`Error: tried to index a variable that is not an array`);
   }
 
+  let scope: PointerScope;
+  if (varInfo.type === 'int') {
+    scope = 'pointerInt';
+  } else if (varInfo.type === 'float') {
+    scope = 'pointerFloat';
+  } else {
+    scope = 'pointerString';
+  }
+
+  const constantAddr = declareConstant(String(varInfo.addr), 'int');
+
   const newTemp = getNewTemp();
-  const resAddr = String(currentMemory!.getNextAddressFor('pointer'));
-  currentFunc.size['pointer']++;
+  let resAddr = currentMemory!.getNextAddressFor(scope);
+  currentFunc.size[scope]++;
 
   addQuadruple(
     {
       op: 'SUM',
       left: valueAddr,
-      right: String(varInfo.addr),
-      res: resAddr,
+      right: String(constantAddr),
+      res: String(resAddr),
     },
     {
       leftOp: valueOperand,
@@ -1056,14 +1057,8 @@ export function handleSumArrDirBase(id: string) {
   );
 
   operandStack.push(newTemp);
-  addrStack.push(resAddr);
-  if (varInfo.type === 'int') {
-    typeStack.push('pointerInt');
-  } else if (varInfo.type === 'float') {
-    typeStack.push('pointerFloat');
-  } else {
-    typeStack.push('pointerString');
-  }
+  addrStack.push(String(resAddr));
+  typeStack.push(varInfo.type);
 }
 
 export function handleEndMain() {

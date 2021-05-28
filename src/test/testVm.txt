@@ -1,24 +1,29 @@
 Program patito;
 vars
-  i, j, k, c: int;
-  f: float;
-  s: string;
+  i, x, res: int;
 
-void function log()
+int function fact(m: int)
 {
-  print("Dentro de la funcion uno");
+  if (m > 1) {
+    return (m * fact(m - 1));
+  } else {
+    return(1);
+  }
 }
 
-int function sum(x: int)
-vars
-  res: int;
+int function fib(n: int)
 {
-  res = x + i;
-  return(res);
+  if (n < 2) {
+    return (n);
+  } else {
+    return (fib(n - 1) + fib(n - 2));
+  }
 }
 
 main ()
 {
-  i = 10;
-  println("Operacion = ", sum(i / 2));
+  println("Resultado fact");
+  println(fact(4));
+  println("Resulatdo fib");
+  println(fib(12));
 }

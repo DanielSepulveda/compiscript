@@ -12,6 +12,8 @@ import {
   getScopeFromVarScope,
   isNumber,
   safePop,
+  assertNever,
+  isPointerScope,
 } from '../utils/helpers';
 import { MAX_CALL_STACK } from '../utils/constants';
 import {
@@ -56,15 +58,8 @@ let executionStatus: ExecutionStatus = 'idle';
 
 /* ---------------------------------- INIT ---------------------------------- */
 
-function loadCompilationData() {
-  const rawDataAsString = fs.readFileSync(objFilePath, 'utf8');
-  const parsedResult = safeJsonParse(isValidCompilationData)(rawDataAsString);
-
-  if (parsedResult.hasError) {
-    throw new Error('Internal error: Error loading compilation output file');
-  }
-
-  compilationData = parsedResult.parsed;
+function loadCompilationData(data: CompilationOutput) {
+  compilationData = data;
   funcDir = compilationData.funcDir;
   quadruples = compilationData.quadruples;
 }
@@ -137,25 +132,34 @@ function initCallStack() {
 
   const globalFunc = funcDir[globalFuncKey];
 
-  const countVars = {
+  const countTemporals = {
     int: globalFunc.size.localIntTemporal,
     float: globalFunc.size.localFloatTemporal,
     string: globalFunc.size.localStringTemporal,
   };
 
-  const temporalMemory = new VmMemory('temporal', countVars);
+  const temporalMemory = new VmMemory('temporal', countTemporals);
+
+  const countPointers = {
+    int: globalFunc.size.pointerInt,
+    float: globalFunc.size.pointerFloat,
+    string: globalFunc.size.pointerString,
+  };
+
+  const pointerMemory = new VmMemory('pointer', countPointers);
 
   const initialFrame: CallFrame = {
     func: globalFunc,
     localMemory: globalMemory,
     temporalMemory,
+    pointerMemory,
   };
 
   currentFrame = initialFrame;
 }
 
-export function init() {
-  loadCompilationData();
+export function init(compilationOutput: CompilationOutput) {
+  loadCompilationData(compilationOutput);
   initGlobalMemory();
   initConstantsMemory();
   initCallStack();
@@ -186,26 +190,43 @@ function getAddrVarScope(addr: string) {
 function getMemoryForAddr(addr: string) {
   const scope = getScopeFromVarScope(getAddrVarScope(addr));
 
-  if (scope === 'global') {
-    return globalMemory;
+  switch (scope) {
+    case 'global':
+      return globalMemory;
+    case 'local':
+      return currentFrame.localMemory;
+    case 'temporal':
+      return currentFrame.temporalMemory;
+    case 'constant':
+      return constantMemory;
+    case 'pointer':
+      return currentFrame.pointerMemory;
+    default:
+      assertNever(scope);
+      throw new Error('Execution error: unknown memory for address');
   }
-  if (scope === 'constant') {
-    return constantMemory;
-  }
-  if (scope === 'local') {
-    return currentFrame.localMemory;
-  }
-  return currentFrame.temporalMemory;
 }
 
 function getMemoryValue(addr: string) {
-  const memory = getMemoryForAddr(addr);
+  let memory = getMemoryForAddr(addr);
 
-  const val = memory.getValue(addr);
+  let val = memory.getValue(addr);
   if (val === null) {
     throw new Error(
       `Memory error: tried to perform an operation on an adress that has no value`
     );
+  }
+
+  const isAPointer = isPointerScope(getAddrVarScope(addr));
+
+  if (isAPointer) {
+    memory = getMemoryForAddr(val);
+    val = memory.getValue(val);
+    if (val === null) {
+      throw new Error(
+        `Memory error: tried to perform an operation on an adress that has no value`
+      );
+    }
   }
 
   return val;
@@ -277,7 +298,8 @@ function executeQuad(quad: Quadruple) {
       [leftVal] = getAddrNumberValue(isValid(left));
       [rightVal] = getAddrNumberValue(isValid(right));
       resVal = leftVal * rightVal;
-      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      memory = getMemoryForAddr(isValid(res));
+      memory.setValue(isValid(res), String(resVal));
       break;
     case 'DIV':
       [leftVal, leftType] = getAddrNumberValue(isValid(left));
@@ -287,19 +309,22 @@ function executeQuad(quad: Quadruple) {
       } else {
         resVal = Math.floor(leftVal / rightVal);
       }
-      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      memory = getMemoryForAddr(isValid(res));
+      memory.setValue(isValid(res), String(resVal));
       break;
     case 'SUM':
       [leftVal] = getAddrNumberValue(isValid(left));
       [rightVal] = getAddrNumberValue(isValid(right));
       resVal = leftVal + rightVal;
-      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      memory = getMemoryForAddr(isValid(res));
+      memory.setValue(isValid(res), String(resVal));
       break;
     case 'SUB':
       [leftVal] = getAddrNumberValue(isValid(left));
       [rightVal] = getAddrNumberValue(isValid(right));
       resVal = leftVal - rightVal;
-      currentFrame.temporalMemory.setValue(isValid(res), String(resVal));
+      memory = getMemoryForAddr(isValid(res));
+      memory.setValue(isValid(res), String(resVal));
       break;
     case 'LT':
       [leftVal] = getAddrNumberValue(isValid(left));
@@ -358,7 +383,17 @@ function executeQuad(quad: Quadruple) {
     case 'ASSIGN':
       [leftVal] = getAddrValueAndType(isValid(left));
       memory = getMemoryForAddr(isValid(res));
-      memory.setValue(res, String(leftVal));
+      const isAPointer = isPointerScope(getAddrVarScope(res));
+      if (isAPointer) {
+        resVal = memory.getValue(res);
+        if (resVal === null) {
+          throw new Error('Execution erorr: array pointer address is null');
+        }
+        memory = getMemoryForAddr(isValid(resVal));
+        memory.setValue(resVal, String(leftVal));
+      } else {
+        memory.setValue(res, String(leftVal));
+      }
       break;
     case 'PRINT':
       [resVal] = getAddrValueAndType(isValid(res));
@@ -366,6 +401,16 @@ function executeQuad(quad: Quadruple) {
       break;
     case 'PRINTLN':
       process.stdout.write('\n');
+      break;
+
+    // ARRAYS
+    case 'VERIFY':
+      [leftVal] = getAddrIntValue(isValid(left));
+      rightVal = parseInt(isValid(right)); // lower bound
+      resVal = parseInt(isValid(res)); // upper bound
+      if (leftVal < rightVal || leftVal > resVal) {
+        throw new Error(`Error: array index out of bounds`);
+      }
       break;
 
     // FUNCTIONS
@@ -381,10 +426,16 @@ function executeQuad(quad: Quadruple) {
         float: func.size.localFloatTemporal,
         string: func.size.localStringTemporal,
       });
+      let newPointerMemory = new VmMemory('pointer', {
+        int: func.size.pointerInt,
+        float: func.size.pointerFloat,
+        string: func.size.pointerString,
+      });
       tempNewFrame = {
         func,
         localMemory: newLocalMemory,
         temporalMemory: newTempMemory,
+        pointerMemory: newPointerMemory,
       };
       break;
     case 'PARAMETER':
@@ -404,6 +455,8 @@ function executeQuad(quad: Quadruple) {
     case 'RETURN':
       [leftVal] = getAddrValueAndType(isValid(left));
       globalMemory.setValue(res, String(leftVal));
+      tempNextIP = safePop(jumpsStack);
+      currentFrame = safePop(callStack);
       break;
     case 'ENDFUNC':
       tempNextIP = safePop(jumpsStack);

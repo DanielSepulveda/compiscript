@@ -57,7 +57,9 @@ export const RANGES: Record<VarScope, [number, number]> = {
   constantInt: [10_000, 10_999],
   constantFloat: [11_000, 11_999],
   constantString: [12_000, 12_999],
-  pointer: [13_000, 13_999],
+  pointerInt: [13_000, 13_999],
+  pointerFloat: [14_000, 14_999],
+  pointerString: [15_000, 15_999],
 };
 
 export const MAX_CALL_STACK = 1_000;

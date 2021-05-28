@@ -1,4 +1,4 @@
-import { findKey } from 'lodash';
+import { findKey, noop } from 'lodash';
 import { Stack } from 'mnemonist';
 import {
   CompilationOutput,
@@ -9,7 +9,7 @@ import {
   LocalVarScope,
   VarTypes,
   Scope,
-  PointerTypes,
+  PointerScope,
 } from '../types';
 import { RANGES } from '../utils/constants';
 
@@ -78,6 +78,14 @@ export const isTemporalScope = (scope: VarScope): scope is LocalVarScope => {
   );
 };
 
+export const isPointerScope = (scope: VarScope): scope is PointerScope => {
+  return (
+    scope === 'pointerInt' ||
+    scope === 'pointerFloat' ||
+    scope === 'pointerString'
+  );
+};
+
 export const getScopeFromVarScope = (scope: VarScope): Scope => {
   if (isGlobalScope(scope)) {
     return 'global';
@@ -88,7 +96,10 @@ export const getScopeFromVarScope = (scope: VarScope): Scope => {
   if (isTemporalScope(scope)) {
     return 'temporal';
   }
-  return 'constant';
+  if (isConstantScope(scope)) {
+    return 'constant';
+  }
+  return 'pointer';
 };
 
 export const isInt = (scope: VarScope) => {
@@ -96,7 +107,8 @@ export const isInt = (scope: VarScope) => {
     scope === 'globalInt' ||
     scope === 'localInt' ||
     scope === 'localIntTemporal' ||
-    scope === 'constantInt'
+    scope === 'constantInt' ||
+    scope === 'pointerInt'
   );
 };
 
@@ -105,7 +117,8 @@ export const isFloat = (scope: VarScope) => {
     scope === 'globalFloat' ||
     scope === 'localFloat' ||
     scope === 'localFloatTemporal' ||
-    scope === 'constantFloat'
+    scope === 'constantFloat' ||
+    scope === 'pointerFloat'
   );
 };
 
@@ -114,7 +127,8 @@ export const isString = (scope: VarScope) => {
     scope === 'globalString' ||
     scope === 'localString' ||
     scope === 'localStringTemporal' ||
-    scope === 'constantString'
+    scope === 'constantString' ||
+    scope === 'pointerString'
   );
 };
 
@@ -144,20 +158,6 @@ export function safePop<T>(stack: Stack<T>) {
   return val;
 }
 
-export function getVarTypeFromPointerType(pointerType: PointerTypes): VarTypes {
-  if (pointerType === 'pointerInt') return 'int';
-  if (pointerType === 'pointerFloat') return 'float';
-  return 'string';
-}
-
-export function isTypePointer(
-  type: PointerTypes | VarTypes
-): type is PointerTypes {
-  return (
-    type === 'pointerInt' || type === 'pointerFloat' || type === 'pointerString'
-  );
-}
-
 export function isVariable(addr: number) {
   const scope = getVarScopeFromAddress(addr);
 
@@ -166,4 +166,8 @@ export function isVariable(addr: number) {
   }
 
   return isGlobalScope(scope) || isLocalScope(scope);
+}
+
+export function assertNever(v: never) {
+  noop();
 }

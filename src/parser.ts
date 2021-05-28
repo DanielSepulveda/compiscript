@@ -5,7 +5,6 @@ const parse = (input: string) => {
   if (matchResult.succeeded()) {
     return matchResult;
   } else {
-    console.log('Parse error');
     throw new Error(matchResult.message);
   }
 };

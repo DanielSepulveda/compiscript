@@ -20,7 +20,9 @@ export default class CompilationMemory {
       constantInt: RANGES.constantInt[0],
       constantFloat: RANGES.constantFloat[0],
       constantString: RANGES.constantString[0],
-      pointer: RANGES.pointer[0],
+      pointerInt: RANGES.pointerInt[0],
+      pointerFloat: RANGES.pointerFloat[0],
+      pointerString: RANGES.pointerString[0],
     };
   }
 

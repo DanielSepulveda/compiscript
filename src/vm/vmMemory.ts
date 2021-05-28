@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { VarTypes } from '../types';
+import { VarTypes, Scope } from '../types';
 import { RANGES } from '../utils/constants';
 import {
   jsonStringify,
@@ -7,8 +7,7 @@ import {
   getVarScopeFromAddress,
 } from '../utils/helpers';
 
-type scopes = 'global' | 'local' | 'temporal' | 'constant';
-type ScopeRanges = Record<scopes, Record<VarTypes, [number, number]>>;
+type ScopeRanges = Record<Scope, Record<VarTypes, [number, number]>>;
 
 const scopeRanges: ScopeRanges = {
   global: {
@@ -30,6 +29,11 @@ const scopeRanges: ScopeRanges = {
     int: RANGES.constantInt,
     float: RANGES.constantFloat,
     string: RANGES.constantString,
+  },
+  pointer: {
+    int: RANGES.pointerInt,
+    float: RANGES.pointerFloat,
+    string: RANGES.pointerString,
   },
 };
 

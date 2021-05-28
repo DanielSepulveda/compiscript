@@ -30,9 +30,11 @@ main ()
 {
   i = 2;
   k = i + 1;
+  f = 1;
+  j = 1;
   while(i > 0) {
-    print(dos((i + k) * i / 4 - 7, f * (3 - 2 + 1)) + 3);
-    print(i, j * 2, f * 2 + 1.5);
+    println(dos((i + k) * i / 4 - 7, f * (3 - 2 + 1)) + 3);
+    println(i, j * 2, f * 2 + 1.5);
     i = i - k / 2;
   }
 }
