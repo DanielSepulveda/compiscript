@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.1.0](https://github.com/DanielSepulveda/compiscript/compare/v6.0.0...v6.1.0) (2021-05-29)
+
+
+### Features
+
+* **vm:** handle input and output ([2d8a0a4](https://github.com/DanielSepulveda/compiscript/commit/2d8a0a4b77d7ef5017de70c5ef8a177b491dddbf))
+
+
+### Bug Fixes
+
+* remove read grammar from file ([8370e54](https://github.com/DanielSepulveda/compiscript/commit/8370e54fd059dc45d058605759d0fc672c402dd7))
+
 ## [6.0.0](https://github.com/DanielSepulveda/compiscript/compare/v2.0.0...v6.0.0) (2021-05-28)
 
 
