@@ -1,3 +1,4 @@
+require('regenerator-runtime/runtime');
 const fs = require('fs');
 const path = require('path');
 const { compiler, parser, vm } = require('./dist/cjs');
