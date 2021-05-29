@@ -1,4 +1,4 @@
-import { findKey, noop } from 'lodash';
+import { findKey, noop, isInteger, isFinite } from 'lodash';
 import { Stack } from 'mnemonist';
 import {
   CompilationOutput,
@@ -142,7 +142,7 @@ export const getVarTypeFromVarScope = (scope: VarScope): VarTypes => {
   return 'string';
 };
 
-export const isNumber = (type: VarTypes): type is 'int' | 'float' => {
+export const isNumberType = (type: VarTypes): type is 'int' | 'float' => {
   return type === 'int' || type === 'float';
 };
 
@@ -170,4 +170,14 @@ export function isVariable(addr: number) {
 
 export function assertNever(v: never) {
   noop();
+}
+
+export function assertInputType(value: any, type: VarTypes) {
+  if (type === 'int') {
+    return isInteger(parseFloat(value));
+  }
+  if (type === 'float') {
+    return isFinite(parseFloat(value));
+  }
+  return true;
 }

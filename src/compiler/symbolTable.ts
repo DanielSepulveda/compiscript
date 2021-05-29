@@ -550,19 +550,20 @@ export function performPrintLn() {
   });
 }
 
-export function performRead(name: string) {
-  const v = getVar(name);
-  markVarWithValue(name);
+export function performRead() {
+  const operand = safePop(operandStack);
+  const operandType = safePop(typeStack);
+  const operandAddr = safePop(addrStack);
 
   addQuadruple(
     {
       op: QUADRUPLE_OPERATIONS['read'],
       left: '-1',
       right: '-1',
-      res: String(v.addr),
+      res: operandAddr,
     },
     {
-      resOp: v.name,
+      resOp: operand,
     }
   );
 }

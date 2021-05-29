@@ -1,0 +1,9 @@
+Program patito;
+vars
+  message: string;
+
+main ()
+{
+  read(message);
+  println("hello ", message);
+}

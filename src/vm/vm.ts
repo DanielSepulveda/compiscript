@@ -1,19 +1,16 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { Stack } from 'mnemonist';
 import { findKey, invert, isEmpty, noop } from 'lodash';
 import VmMemory, { MemoryMap } from './vmMemory';
 import {
-  safeJsonParse,
-  isValidCompilationData,
   getVarScopeFromAddress,
   isConstantScope,
   getVarTypeFromVarScope,
   getScopeFromVarScope,
-  isNumber,
+  isNumberType,
   safePop,
   assertNever,
   isPointerScope,
+  assertInputType,
 } from '../utils/helpers';
 import { MAX_CALL_STACK } from '../utils/constants';
 import {
@@ -30,8 +27,6 @@ import {
 /* -------------------------------------------------------------------------- */
 
 /* ---------------------------------- DATA ---------------------------------- */
-
-const objFilePath = path.join(__dirname, '..', 'out', 'obj.txt');
 
 let compilationData: CompilationOutput;
 let funcDir: FuncDir;
@@ -53,16 +48,18 @@ const constantMemory = new VmMemory('constant');
 let executionStatus: ExecutionStatus = 'idle';
 
 /* -------------------------------------------------------------------------- */
-/*                                   METHODS                                  */
+/*                                    INIT                                    */
 /* -------------------------------------------------------------------------- */
 
-/* ---------------------------------- INIT ---------------------------------- */
+/* ------------------------- LOAD COMPILATION OUTPUT ------------------------ */
 
 function loadCompilationData(data: CompilationOutput) {
   compilationData = data;
   funcDir = compilationData.funcDir;
   quadruples = compilationData.quadruples;
 }
+
+/* --------------------------- LOAD GLOBAL MEMORY --------------------------- */
 
 function initGlobalMemory() {
   const globalFuncKey = findKey(funcDir, (o) => o.isGlobal);
@@ -83,6 +80,8 @@ function initGlobalMemory() {
 
   globalMemory.initMemory(countVars);
 }
+
+/* -------------------------- LOAD CONSTANTS MEMORY ------------------------- */
 
 function initConstantsMemory() {
   const constants = compilationData.constants;
@@ -120,6 +119,8 @@ function initConstantsMemory() {
   constantMemory.initMemory(countVars);
   constantMemory.setMemory(values);
 }
+
+/* ----------------------------- INIT CALLSTACK ----------------------------- */
 
 function initCallStack() {
   const globalFuncKey = findKey(funcDir, (o) => o.isGlobal);
@@ -165,7 +166,45 @@ export function init(compilationOutput: CompilationOutput) {
   initCallStack();
 }
 
-/* -------------------------------- EXECUTION ------------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                                  EXECUTION                                 */
+/* -------------------------------------------------------------------------- */
+
+/* ----------------------------- OUTPUT HANDLING ---------------------------- */
+
+type OnOutputFunc = (message: string) => void;
+let internalOnOutput: OnOutputFunc;
+
+/* ----------------------------- INPUT HANDLING ----------------------------- */
+
+type OnInputFunc = () => void;
+let internalOnInput: OnInputFunc;
+let userInput: string | null = null;
+let inputInterval: NodeJS.Timeout;
+
+const waitForInput = () => {
+  return new Promise<string>((resolve) => {
+    inputInterval = setInterval(() => {
+      if (userInput !== null) {
+        resolve(userInput);
+      }
+    }, 1000);
+  });
+};
+
+const extractInput = async () => {
+  internalOnInput();
+  const input = await waitForInput();
+  clearInterval(inputInterval);
+  userInput = null;
+  return input;
+};
+
+export function sendInput(input: string) {
+  userInput = input;
+}
+
+/* ---------------------------------- UTILS --------------------------------- */
 
 function isValid(val: string) {
   if (val === '-1') {
@@ -256,7 +295,7 @@ function getAddrValueAndType(addr: string): [string | number, VarTypes] {
 function getAddrNumberValue(addr: string): [number, VarTypes] {
   const [val, varType] = getAddrValueAndType(addr);
 
-  if (!isNumber(varType)) {
+  if (!isNumberType(varType)) {
     throw new Error('Error: value is not of type number (int | float)');
   }
 
@@ -281,15 +320,18 @@ function transformIntToBool(val: number): boolean {
   return val === 1;
 }
 
-function executeQuad(quad: Quadruple) {
+/* ----------------------------- QUAD EXECUTION ----------------------------- */
+
+async function executeQuad(quad: Quadruple) {
   const left = quad.left;
   const right = quad.right;
   const res = quad.res;
 
   let leftVal, rightVal, resVal;
-  let leftType, rightType;
+  let leftType, rightType, resType;
   let memory;
   let func;
+  let input;
   let tempNextIP: number | null = null;
 
   switch (quad.op) {
@@ -383,8 +425,7 @@ function executeQuad(quad: Quadruple) {
     case 'ASSIGN':
       [leftVal] = getAddrValueAndType(isValid(left));
       memory = getMemoryForAddr(isValid(res));
-      const isAPointer = isPointerScope(getAddrVarScope(res));
-      if (isAPointer) {
+      if (isPointerScope(getAddrVarScope(res))) {
         resVal = memory.getValue(res);
         if (resVal === null) {
           throw new Error('Execution erorr: array pointer address is null');
@@ -397,10 +438,32 @@ function executeQuad(quad: Quadruple) {
       break;
     case 'PRINT':
       [resVal] = getAddrValueAndType(isValid(res));
-      process.stdout.write(String(resVal));
+      internalOnOutput(String(resVal));
       break;
     case 'PRINTLN':
-      process.stdout.write('\n');
+      internalOnOutput('\n');
+      break;
+    case 'READ':
+      resType = getAddrVarType(res);
+      resVal = res;
+      input = await extractInput();
+      const isInputValid = assertInputType(input, resType);
+      if (!isInputValid) {
+        throw new Error(
+          `Execution error: provided input does not match variable type`
+        );
+      }
+      memory = getMemoryForAddr(isValid(res));
+      if (isPointerScope(getAddrVarScope(res))) {
+        resVal = memory.getValue(res);
+        if (resVal === null) {
+          throw new Error('Execution erorr: array pointer address is null');
+        }
+        memory = getMemoryForAddr(isValid(resVal));
+        memory.setValue(resVal, input);
+      } else {
+        memory.setValue(res, input);
+      }
       break;
 
     // ARRAYS
@@ -489,6 +552,7 @@ function executeQuad(quad: Quadruple) {
 
     default:
       noop();
+      break;
   }
 
   if (tempNextIP !== null) {
@@ -498,12 +562,20 @@ function executeQuad(quad: Quadruple) {
   }
 }
 
-export function execute() {
+type ExecuteParams = {
+  onOutput: OnOutputFunc;
+  onInput: OnInputFunc;
+};
+
+export async function execute({ onOutput, onInput }: ExecuteParams) {
+  internalOnOutput = onOutput;
+  internalOnInput = onInput;
+
   executionStatus = 'executing';
 
   while (executionStatus === 'executing') {
     try {
-      executeQuad(quadruples[instructionPointer]);
+      await executeQuad(quadruples[instructionPointer]);
     } catch (e) {
       if (e instanceof Error) {
         console.log(e.message);

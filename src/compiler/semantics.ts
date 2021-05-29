@@ -286,9 +286,11 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
     return;
   },
   ReadExpression(varExpression) {
-    const v = varExpression.applySemantics() as Omit<Var, 'type'>;
+    varExpression.applySemantics();
 
-    symbolTable.performRead(v.name);
+    symbolTable.performRead();
+
+    return;
   },
 
   /* -------------------------------------------------------------------------- */
