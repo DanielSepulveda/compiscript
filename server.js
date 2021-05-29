@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { compiler, parser, vm } = require('./dist/cjs');
+const prompts = require('prompts');
 
 require('dotenv').config();
 
@@ -13,7 +14,20 @@ try {
   const parsed = parser(input);
   const compiled = compiler(parsed);
   vm.init(compiled);
-  vm.execute();
+  vm.execute({
+    onOutput: (message) => {
+      process.stdout.write(message);
+    },
+    onInput: async () => {
+      const res = await prompts({
+        name: 'input',
+        type: 'text',
+        message: 'Input',
+      });
+
+      vm.sendInput(res.input);
+    },
+  });
   console.log('\n');
 } catch (error) {
   console.log(error.message);
