@@ -592,7 +592,7 @@ export async function execute({ onOutput, onInput }: ExecuteParams) {
 
 /* --------------------------------- LOGGER --------------------------------- */
 
-export function logData() {
-  console.log(globalMemory.toJson());
-  console.log(constantMemory.toJson());
-}
+// export function logData() {
+//   console.log(globalMemory.toJson());
+//   console.log(constantMemory.toJson());
+// }
