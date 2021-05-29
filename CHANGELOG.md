@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [6.1.1](https://github.com/DanielSepulveda/compiscript/compare/v6.1.0...v6.1.1) (2021-05-29)
+
+
+### Bug Fixes
+
+* run build script before release ([6394549](https://github.com/DanielSepulveda/compiscript/commit/639454974baa26416a176beb744464c7e00c71d9))
+* update build test script ([27e4441](https://github.com/DanielSepulveda/compiscript/commit/27e44416714f4c7cf483ea7d17f02f38a3a626c4))
+* update test build scrip ([a56ad13](https://github.com/DanielSepulveda/compiscript/commit/a56ad13a51a421cc908dc04b55d21131c0d6777f))
+
 ## [6.1.0](https://github.com/DanielSepulveda/compiscript/compare/v6.0.0...v6.1.0) (2021-05-29)
 
 
