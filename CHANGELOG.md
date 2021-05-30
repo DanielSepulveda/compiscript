@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [6.2.1](https://github.com/DanielSepulveda/compiscript/compare/v6.2.0...v6.2.1) (2021-05-30)
+
+
+### Bug Fixes
+
+* cleanup compiler ([846c5a0](https://github.com/DanielSepulveda/compiscript/commit/846c5a071e40b2b4051c4834107c64500052a49a))
+
 ## [6.2.0](https://github.com/DanielSepulveda/compiscript/compare/v6.1.1...v6.2.0) (2021-05-30)
 
 
