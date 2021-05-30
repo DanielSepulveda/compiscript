@@ -24,15 +24,14 @@ import {
   isVariable,
 } from '../utils/helpers';
 import * as logger from './logger';
-import { add } from 'lodash';
 
 /* -------------------------------------------------------------------------- */
 /*                                  Internals                                 */
 /* -------------------------------------------------------------------------- */
 
-const funcDir: FuncDir = {};
+let funcDir: FuncDir = {};
 
-const globalFunc: Func = {
+let globalFunc: Func = {
   name: '',
   returnType: 'void',
   vars: {},
@@ -40,18 +39,18 @@ const globalFunc: Func = {
   size: generateFunctionSize(),
   isGlobal: true,
 };
-const globalMemory = new Memory();
+let globalMemory = new Memory();
 
 let currentFunc: Func = globalFunc;
 let currentMemory: Memory | null = globalMemory;
 
-const constants: Record<string, number> = {};
+let constants: Record<string, number> = {};
 
-const operatorStack = new Stack<Operators>();
-const operandStack = new Stack<string>();
-const typeStack = new Stack<VarTypes>();
-const jumpsStack = new Stack<number>();
-const addrStack = new Stack<string>();
+let operatorStack = new Stack<Operators>();
+let operandStack = new Stack<string>();
+let typeStack = new Stack<VarTypes>();
+let jumpsStack = new Stack<number>();
+let addrStack = new Stack<string>();
 
 const stacks = {
   operatorStack,
@@ -61,7 +60,7 @@ const stacks = {
   addrStack,
 };
 
-const quadrupleArr: Quadruple[] = [];
+let quadrupleArr: Quadruple[] = [];
 
 let tempCount = 0;
 let quadCount = 0;
@@ -1071,4 +1070,35 @@ export function handleEndMain() {
     right: '-1',
     res: '-1',
   });
+}
+
+export function cleanup() {
+  funcDir = {};
+
+  globalFunc = {
+    name: '',
+    returnType: 'void',
+    vars: {},
+    params: [],
+    size: generateFunctionSize(),
+    isGlobal: true,
+  };
+
+  globalMemory = new Memory();
+
+  currentFunc = globalFunc;
+  currentMemory = globalMemory;
+
+  constants = {};
+
+  operatorStack.clear();
+  operandStack.clear();
+  typeStack.clear();
+  jumpsStack.clear();
+  addrStack.clear();
+
+  quadrupleArr = [];
+
+  tempCount = 0;
+  quadCount = 0;
 }
