@@ -65,7 +65,7 @@ let quadrupleArr: Quadruple[] = [];
 let tempCount = 0;
 let quadCount = 0;
 
-export const internal = {
+export let internal = {
   funcDir,
   globalFunc,
   constants,
@@ -1101,4 +1101,15 @@ export function cleanup() {
 
   tempCount = 0;
   quadCount = 0;
+
+  internal = {
+    funcDir,
+    globalFunc,
+    constants,
+    currentFunc,
+    stacks,
+    quadrupleArr,
+    tempCount,
+    quadCount,
+  };
 }
