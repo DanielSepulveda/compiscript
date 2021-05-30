@@ -40,8 +40,8 @@ let tempNewFrame: CallFrame | null;
 
 /* --------------------------------- MEMORY --------------------------------- */
 
-const globalMemory = new VmMemory('global');
-const constantMemory = new VmMemory('constant');
+let globalMemory = new VmMemory('global');
+let constantMemory = new VmMemory('constant');
 
 /* ---------------------------------- FLAGS --------------------------------- */
 
@@ -588,6 +588,21 @@ export async function execute({ onOutput, onInput }: ExecuteParams) {
     console.log('Virtual machine terminated with an error');
     return;
   }
+
+  cleanup();
+}
+
+/* --------------------------------- CLEANUP -------------------------------- */
+
+function cleanup() {
+  instructionPointer = 0;
+  callStack.clear();
+  jumpsStack.clear();
+
+  globalMemory = new VmMemory('global');
+  constantMemory = new VmMemory('constant');
+
+  executionStatus = 'idle';
 }
 
 /* --------------------------------- LOGGER --------------------------------- */
