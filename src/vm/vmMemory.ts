@@ -7,6 +7,12 @@ import {
   getVarScopeFromAddress,
 } from '../utils/helpers';
 
+/**
+ * This class handles the memory usage during execution.
+ * Here we also define methods which are used whenever we
+ * want to obtain or store a certain value.
+ */
+
 type ScopeRanges = Record<Scope, Record<VarTypes, [number, number]>>;
 
 const scopeRanges: ScopeRanges = {
@@ -45,14 +51,23 @@ type MemoryScope = keyof typeof scopeRanges;
 class VmMemory {
   private scope: MemoryScope;
 
+  // Memory maps for each variable type
   private memory: Record<VarTypes, MemoryMap | null> = {
     int: null,
     float: null,
     string: null,
   };
 
+  // Addresses list used to know if an address has been defined
   private allAddresses: string[] = [];
 
+  /**
+   * VmMemory constructor used to link it to a specific
+   * memory scope and optionally initialize its size.
+   *
+   * @param scope `MemoryScope`
+   * @param load `LoadInitialMemory`
+   */
   constructor(scope: MemoryScope, load: LoadInitialMemory = {}) {
     this.scope = scope;
     if (!isEmpty(load)) {
@@ -60,6 +75,13 @@ class VmMemory {
     }
   }
 
+  /**
+   * This function initializes a memory map for a given
+   * variable type with a given size.
+   *
+   * @param size `number`
+   * @param type `VarType`
+   */
   private initMemoryType(size: number, type: VarTypes) {
     const baseAddr = scopeRanges[this.scope][type][0];
     let memCounter = 0;
@@ -76,6 +98,12 @@ class VmMemory {
     this.memory[type] = tempMemory;
   }
 
+  /**
+   * This function receives the initial memory and
+   * initializes the corresponding memory maps
+   *
+   * @param load `LoadInitialMemory`
+   */
   initMemory(load: LoadInitialMemory) {
     if (load.int) {
       this.initMemoryType(load.int, 'int');
@@ -90,10 +118,23 @@ class VmMemory {
     }
   }
 
+  /**
+   * Asserts that an address exists in the current memory
+   *
+   * @param addr `string`
+   * @returns `boolean`
+   */
   isAddrValid(addr: string) {
     return this.allAddresses.includes(addr);
   }
 
+  /**
+   * Sets a value in the given adress for the int memory
+   * map
+   *
+   * @param addr `string`
+   * @param value `MemoryValue`
+   */
   private setIntValue(addr: string, value: MemoryValue) {
     if (this.memory.int === null) {
       throw new Error(
@@ -104,6 +145,13 @@ class VmMemory {
     this.memory.int[addr] = value;
   }
 
+  /**
+   * Sets a value in the given adress for the float memory
+   * map
+   *
+   * @param addr `string`
+   * @param value `MemoryValue`
+   */
   private setFloatValue(addr: string, value: MemoryValue) {
     if (this.memory.float === null) {
       throw new Error(
@@ -114,6 +162,13 @@ class VmMemory {
     this.memory.float[addr] = value;
   }
 
+  /**
+   * Sets a value in the given adress for the string memory
+   * map
+   *
+   * @param addr `string`
+   * @param value `MemoryValue`
+   */
   private setStringValue(addr: string, value: MemoryValue) {
     if (this.memory.string === null) {
       throw new Error(
@@ -124,10 +179,16 @@ class VmMemory {
     this.memory.string[addr] = value;
   }
 
+  /**
+   * Obtains the variable type for a given address
+   *
+   * @param addr `string`
+   * @returns `VarType`
+   */
   private getVarTypeFromAddr(addr: string) {
     if (!this.isAddrValid(addr)) {
       throw new Error(
-        `Memory error: cannot set value to address ${addr} because the address doesn't exist in memory`
+        `Memory error: tried to access an address that doesn't exist in memory`
       );
     }
 
@@ -146,6 +207,14 @@ class VmMemory {
     return varType;
   }
 
+  /**
+   * Sets a memory address with a given value by calling
+   * the corresponding method for the address variable
+   * type
+   *
+   * @param addr `string`
+   * @param value `MemoryValue`
+   */
   setValue(addr: string, value: MemoryValue) {
     const varType = this.getVarTypeFromAddr(addr);
 
@@ -158,6 +227,12 @@ class VmMemory {
     }
   }
 
+  /**
+   * Fills the memory with values.
+   *
+   * @param newMemory `MemoryMap`
+   * @returns
+   */
   setMemory(newMemory: MemoryMap) {
     if (isEmpty(newMemory)) {
       return;
@@ -168,6 +243,13 @@ class VmMemory {
     });
   }
 
+  /**
+   * Returns the value of a given address from the
+   * int memory map
+   *
+   * @param addr `string`
+   * @returns `MemoryValue`
+   */
   private getIntValue(addr: string) {
     if (this.memory.int === null) {
       throw new Error(
@@ -178,6 +260,13 @@ class VmMemory {
     return this.memory.int[addr];
   }
 
+  /**
+   * Returns the value of a given address from the
+   * float memory map
+   *
+   * @param addr `string`
+   * @returns `MemoryValue`
+   */
   private getFloatValue(addr: string) {
     if (this.memory.float === null) {
       throw new Error(
@@ -188,6 +277,13 @@ class VmMemory {
     return this.memory.float[addr];
   }
 
+  /**
+   * Returns the value of a given address from the
+   * string memory map
+   *
+   * @param addr `string`
+   * @returns `MemoryValue`
+   */
   private getStringValue(addr: string) {
     if (this.memory.string === null) {
       throw new Error(
@@ -198,6 +294,12 @@ class VmMemory {
     return this.memory.string[addr];
   }
 
+  /**
+   * Returns the value of a given address
+   *
+   * @param addr `string`
+   * @returns `MemoryValue`
+   */
   getValue(addr: string) {
     const varType = this.getVarTypeFromAddr(addr);
 
@@ -210,6 +312,12 @@ class VmMemory {
     }
   }
 
+  /**
+   * Transforms the memory object to a json object,
+   * usefull for debugging.
+   *
+   * @returns `Record<VarTypes, MemoryMap | null>`
+   */
   toJson() {
     return jsonStringify(this.memory);
   }
