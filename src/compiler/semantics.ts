@@ -3,6 +3,13 @@ import * as symbolTable from './symbolTable';
 import { Var, VarTypes, VarDims } from '../types';
 import { OPERATORS } from '../utils/constants';
 
+/**
+ * Create a new semantic operation to be applied to a
+ * successfully parsed program. Each method defined here
+ * corresponds to a gramatic rule, and inside each method
+ * there are functions which correspond to neuralgical points.
+ */
+
 const s = grammar.createSemantics().addOperation('applySemantics', {
   string(_1, str, _3) {
     return { value: str.sourceString, type: 'string' };
