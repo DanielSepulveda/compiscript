@@ -11,6 +11,12 @@ type CanAssignParams = {
   value: VarTypes;
 };
 
+/**
+ * Returns a boolean indicating if a value of a certain type can
+ * be assigned to a variable of another certain type.
+ * @param param0 `{ varType, varType }`
+ * @returns
+ */
 export function checkIfCanAssignType({ variable, value }: CanAssignParams) {
   const validTypes = table[variable];
   return validTypes.includes(value);
