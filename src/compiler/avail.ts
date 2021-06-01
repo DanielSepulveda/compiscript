@@ -1,10 +1,15 @@
 import { VarScope } from '../types';
 import { RANGES } from '../utils/constants';
 
-type MemoryCounters = Record<VarScope, number>;
+type AvailCounters = Record<VarScope, number>;
 
-export default class CompilationMemory {
-  private counters: MemoryCounters;
+/**
+ * The avail class handles the memory addresses used during compilation
+ * for each variable scope.
+ */
+
+export default class Avail {
+  private counters: AvailCounters;
 
   constructor() {
     this.counters = {
@@ -26,6 +31,12 @@ export default class CompilationMemory {
     };
   }
 
+  /**
+   * Returns the next available address for a certain variable
+   * scope. If there is no available address it throws an error.
+   * @param counter `VarScope`
+   * @returns `number`
+   */
   getNextAddressFor(counter: VarScope): number {
     const currentAddr = this.counters[counter];
     const maxAddr = RANGES[counter][1];
@@ -37,6 +48,12 @@ export default class CompilationMemory {
     return this.counters[counter]++;
   }
 
+  /**
+   * Increases the memory counter for a certain variable scope
+   * by an amount. This is usefull for when declaring arrays.
+   * @param counter `VarScope`
+   * @param amount `number`
+   */
   sumCounterBy(counter: VarScope, amount: number) {
     const currentAddr = this.counters[counter];
     const maxAddr = RANGES[counter][1];

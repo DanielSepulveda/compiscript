@@ -12,7 +12,7 @@ import {
   PointerScope,
 } from '../types';
 import * as semanticCube from './semanticCube';
-import Memory from './compilationMemory';
+import Avail from './avail';
 import { checkIfCanAssignType } from './assignTable';
 import { QUADRUPLE_OPERATIONS } from '../utils/constants';
 import {
@@ -31,8 +31,8 @@ export class SymbolTable {
   globalFunc: Func;
   currentFunc: Func;
 
-  globalMemory: Memory;
-  currentMemory: Memory | null;
+  globalMemory: Avail;
+  currentMemory: Avail | null;
 
   constants: Record<string, number>;
 
@@ -59,7 +59,7 @@ export class SymbolTable {
     };
     this.currentFunc = this.globalFunc;
 
-    this.globalMemory = new Memory();
+    this.globalMemory = new Avail();
     this.currentMemory = this.globalMemory;
 
     this.constants = {};
@@ -128,7 +128,7 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
 
   symbolTable.funcDir[name] = newFunc;
   symbolTable.currentFunc = newFunc;
-  symbolTable.currentMemory = new Memory();
+  symbolTable.currentMemory = new Avail();
   symbolTable.currentFunc.beginAddr = symbolTable.quadCount;
 
   if (type !== 'void') {
