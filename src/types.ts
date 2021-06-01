@@ -68,7 +68,6 @@ export type Var = {
   type: VarTypes;
   dims?: VarDims[];
   addr: number;
-  hasValue: boolean;
 };
 
 export type Func = {

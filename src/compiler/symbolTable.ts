@@ -19,7 +19,6 @@ import {
   getVarScopeFromAddress,
   getVarTypeFromVarScope,
   safePop,
-  isVariable,
 } from '../utils/helpers';
 
 /* -------------------------------------------------------------------------- */
@@ -92,7 +91,10 @@ export function getSymbolTable() {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Adds a new function
+ * Adds a new function to the symbolTable. It also performs validations,
+ * and if the function returns a value, it defines a global variable with
+ * the same name.
+ *
  * @param name
  * @param type
  * @param isGlobal
@@ -131,6 +133,7 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
   symbolTable.currentMemory = new Avail();
   symbolTable.currentFunc.beginAddr = symbolTable.quadCount;
 
+  // If function has return, define global variable (parche guadalupano)
   if (type !== 'void') {
     let pointer: VarScope;
     if (type === 'int') {
@@ -148,11 +151,14 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
       name,
       type,
       addr,
-      hasValue: true,
     };
   }
 }
 
+/**
+ * Perform cleanup when a function compilation
+ * has finished and push quadruple.
+ */
 export function handleFuncEnd() {
   symbolTable.currentFunc.vars = null;
   symbolTable.currentMemory = null;
@@ -168,6 +174,7 @@ export function handleFuncEnd() {
 
 /**
  * Checks if a function name is already declared.
+ *
  * @param name
  * @returns Returns true if it finds a function
  */
@@ -177,6 +184,7 @@ export function checkIfFuncExists(name: string) {
 
 /**
  * Checks if a var is already defined in the current scope
+ *
  * @param name
  * @returns
  */
@@ -190,6 +198,7 @@ export function checkIfVarIsDefined(name: string) {
 
 /**
  * Checks is a var exists in the local or global scope
+ *
  * @param name
  * @returns
  */
@@ -203,6 +212,11 @@ export function checkIfVarExists(name: string) {
   return false;
 }
 
+/**
+ * Generates a new function size map
+ *
+ * @returns `function size`
+ */
 function generateFunctionSize(): Func['size'] {
   return {
     globalInt: 0,
@@ -222,6 +236,7 @@ function generateFunctionSize(): Func['size'] {
 
 /**
  * Adds a var to the current function var table
+ *
  * @param name
  * @param type
  * @param dims
@@ -256,6 +271,8 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims[]) {
 
   addr = symbolTable.currentMemory!.getNextAddressFor(scope);
   symbolTable.currentFunc.size[scope]++;
+
+  // If var is an array, take into account its size
   if (dims) {
     let size = dims.reduce((prev, curr) => prev * (parseInt(curr.sup) + 1), 1);
     symbolTable.currentMemory!.sumCounterBy(scope, size - 1);
@@ -267,10 +284,15 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims[]) {
     type,
     dims,
     addr,
-    hasValue: false,
   };
 }
 
+/**
+ * Adds the address of a function parameter to that function's
+ * paramter list.
+ *
+ * @param name `string`
+ */
 export function addFunctionParam(name: string) {
   const currentVarTable = symbolTable.currentFunc.vars;
 
@@ -287,19 +309,21 @@ export function addFunctionParam(name: string) {
 /**
  * Returns a var either in local or global scope. If the var is not found
  * it throws.
+ *
  * @param name
  * @returns
  */
 export function getVar(name: string) {
   const varExists = checkIfVarExists(name);
+
   if (!varExists) {
     throw new Error(`${name} is not defined`);
   }
 
-  const isInLocalScope = checkIfVarIsDefined(name);
+  // If the var exists it must be either in local
+  // or global scope
 
-  // Here we are sure that the vars table exists because of the previous
-  // check
+  const isInLocalScope = checkIfVarIsDefined(name);
 
   if (isInLocalScope) {
     return symbolTable.currentFunc.vars![name];
@@ -308,22 +332,18 @@ export function getVar(name: string) {
   return symbolTable.globalFunc.vars![name];
 }
 
-function markVarWithValue(name: string) {
-  const v = getVar(name);
-  v.hasValue = true;
-}
-
-function checkIfVarHasValue(name: string) {
-  const v = getVar(name);
-  return v.hasValue;
-}
-
+/**
+ * Returns a new temporal operand
+ *
+ * @returns `string`
+ */
 export function getNewTemp() {
   return `t${++symbolTable.tempCount}`;
 }
 
 /**
  * Adds an operator to the operator stack
+ *
  * @param op
  */
 export function pushOperator(op: Operators) {
@@ -332,6 +352,7 @@ export function pushOperator(op: Operators) {
 
 /**
  * Adds a var to the operands stack if it exists, otherwise throws an error.
+ *
  * @param name
  */
 export function pushIdOperand(name: string) {
@@ -342,6 +363,14 @@ export function pushIdOperand(name: string) {
   symbolTable.typeStack.push(operand.type);
 }
 
+/**
+ * Declares a value as a constant. If the value was already declared, it
+ * skipts the declaration. Returns the constant assigned address.
+ *
+ * @param name `string`
+ * @param type `VarTypes`
+ * @returns `string`
+ */
 export function declareConstant(name: string, type: VarTypes) {
   let constantAddr: number;
 
@@ -366,6 +395,13 @@ export function declareConstant(name: string, type: VarTypes) {
   return constantAddr;
 }
 
+/**
+ * Pushes a literal operand to the operands stack after declaring
+ * it as a constant.
+ *
+ * @param name `string`
+ * @param type `VarTypes`
+ */
 export function pushLiteralOperand(name: string, type: VarTypes) {
   const constantAddr = declareConstant(name, type);
 
@@ -375,8 +411,9 @@ export function pushLiteralOperand(name: string, type: VarTypes) {
 }
 
 /**
- * Returns the operation type from the semantic cube. It the result type
+ * Returns the operation type from the semantic cube. If the result type
  * is `error` it throws.
+ *
  * @param exp
  * @returns
  */
@@ -394,6 +431,15 @@ export function getOperationResultType(exp: OperationExpression) {
   return res;
 }
 
+/**
+ * Given the necessary information for a quadruple, this function
+ * registers this new quadruple in the quadruples list. Optionally
+ * it can receive extra information that can be displayed when
+ * debugging the compiler.
+ *
+ * @param newQuad `Quadruple`
+ * @param extra
+ */
 export function addQuadruple(
   newQuad: Omit<Quadruple, 'count'>,
   extra?: { leftOp?: string; rightOp?: string; resOp?: string }
@@ -428,39 +474,37 @@ export function performOperation() {
     throw new Error('Undefined operator');
   }
 
+  // Obtain right operand information
   const rightOperand = safePop(symbolTable.operandStack);
   const rightType = safePop(symbolTable.typeStack);
   const rightAddr = safePop(symbolTable.addrStack);
 
+  // Obtain left operand information
   const leftOperand = safePop(symbolTable.operandStack);
   const leftType = safePop(symbolTable.typeStack);
   const leftAddr = safePop(symbolTable.addrStack);
 
+  // Obtain result type
   const resType = getOperationResultType({
     left: leftType,
     right: rightType,
     op: operator,
   });
 
+  // Handle temporal result memory
   const newTemp = getNewTemp();
-  let resAddr: string;
 
+  let scope: VarScope;
   if (resType === 'int') {
-    resAddr = String(
-      symbolTable.currentMemory!.getNextAddressFor('localIntTemporal')
-    );
-    symbolTable.currentFunc.size['localIntTemporal']++;
+    scope = 'localIntTemporal';
   } else if (resType === 'float') {
-    resAddr = String(
-      symbolTable.currentMemory!.getNextAddressFor('localFloatTemporal')
-    );
-    symbolTable.currentFunc.size['localFloatTemporal']++;
+    scope = 'localFloatTemporal';
   } else {
-    resAddr = String(
-      symbolTable.currentMemory!.getNextAddressFor('localStringTemporal')
-    );
-    symbolTable.currentFunc.size['localStringTemporal']++;
+    scope = 'localStringTemporal';
   }
+
+  const resAddr = String(symbolTable.currentMemory!.getNextAddressFor(scope));
+  symbolTable.currentFunc.size[scope]++;
 
   addQuadruple(
     {
@@ -472,29 +516,34 @@ export function performOperation() {
     { leftOp: leftOperand, rightOp: rightOperand, resOp: newTemp }
   );
 
+  /*
+    Push result back into stacks, these is needed for operations
+    such as an assign.
+  */
   symbolTable.operandStack.push(newTemp);
   symbolTable.addrStack.push(resAddr);
   symbolTable.typeStack.push(resType);
 }
 
+/**
+ * This function works the same as the `performOperation` function
+ * but it asserts if a value can be assigned to a variable, and
+ * also handles a special case for when a function returns a value
+ *
+ * @param param0 `{ isReturn: boolean }`
+ */
 export function performAssign({ isReturn = false } = {}) {
+  // Obtain value operand information
   const valueOperand = safePop(symbolTable.operandStack);
   const valueType = safePop(symbolTable.typeStack);
   const valueAddr = safePop(symbolTable.addrStack);
 
-  // if (isVariable(parseInt(valueAddr))) {
-  //   const hasValue = checkIfVarHasValue(valueOperand);
-  //   if (!hasValue) {
-  //     throw new Error(
-  //       `Error: variable ${valueOperand} was used before it was assigned a value.`
-  //     );
-  //   }
-  // }
-
+  // Obtain result operand information
   const resOperand = safePop(symbolTable.operandStack);
   const resType = safePop(symbolTable.typeStack);
   const resAddr = safePop(symbolTable.addrStack);
 
+  // Assert that value can be assigned
   const canAssignType = checkIfCanAssignType({
     variable: resType,
     value: valueType,
@@ -504,10 +553,6 @@ export function performAssign({ isReturn = false } = {}) {
     throw new Error(
       `Can't assign variable '${resOperand}' of type ${resType} value of type ${valueType}`
     );
-  }
-
-  if (isVariable(parseInt(resAddr))) {
-    markVarWithValue(resOperand);
   }
 
   addQuadruple(
@@ -523,6 +568,11 @@ export function performAssign({ isReturn = false } = {}) {
     }
   );
 
+  /*
+    If the assignation is part of a function return (parche guadalupano)
+    push the result back so that it can be used in other operations
+    Ex: i = y + foo(x);
+  */
   if (isReturn) {
     symbolTable.operandStack.push(resOperand);
     symbolTable.typeStack.push(resType);
@@ -530,6 +580,10 @@ export function performAssign({ isReturn = false } = {}) {
   }
 }
 
+/**
+ * Generates a quadruple that handles the printing
+ * of an operand
+ */
 export function performPrint() {
   const valueOperand = safePop(symbolTable.operandStack);
   safePop(symbolTable.typeStack);
@@ -548,6 +602,9 @@ export function performPrint() {
   );
 }
 
+/**
+ * Generates a quadruple for printing a new line
+ */
 export function performPrintLn() {
   addQuadruple({
     op: QUADRUPLE_OPERATIONS['println'],
@@ -557,9 +614,13 @@ export function performPrintLn() {
   });
 }
 
+/**
+ * Generates a quadruple for reading a value from user
+ * input
+ */
 export function performRead() {
   const operand = safePop(symbolTable.operandStack);
-  const operandType = safePop(symbolTable.typeStack);
+  safePop(symbolTable.typeStack);
   const operandAddr = safePop(symbolTable.addrStack);
 
   addQuadruple(
@@ -575,6 +636,11 @@ export function performRead() {
   );
 }
 
+/**
+ * Validates that a condition expression is of type
+ * `int`. This is because we use integers instead of
+ * booleans.
+ */
 export function validateConditionExpression() {
   const condType = symbolTable.typeStack.pop();
 
@@ -585,12 +651,24 @@ export function validateConditionExpression() {
   }
 }
 
+/**
+ * Fills a quadruple with a value. Usefull for when we know
+ * the result of a certain IP jump (GOTO, GOTOF, etc)
+ *
+ * @param quad `number`
+ * @param value `string`
+ */
 export function fillQuadruple(quad: number, value: string) {
   const quadToFill = symbolTable.quadrupleArr[quad];
   quadToFill.res = value;
   symbolTable.quadrupleArr[quad] = quadToFill;
 }
 
+/**
+ * This function validates a condition expression and generates
+ * quadruple for jumping out of the condition if the epxression is
+ * false
+ */
 export function handleCondition() {
   validateConditionExpression();
 
@@ -612,6 +690,11 @@ export function handleCondition() {
   symbolTable.jumpsStack.push(symbolTable.quadCount - 1);
 }
 
+/**
+ * This function handles the `else` statement on `if`
+ * statements by generating a GOTO quadruple and filling
+ * the previous jump quadruple
+ */
 export function handleIfElse() {
   const jumpFalse = safePop(symbolTable.jumpsStack);
   addQuadruple({
@@ -624,15 +707,29 @@ export function handleIfElse() {
   fillQuadruple(jumpFalse, String(symbolTable.quadCount));
 }
 
+/**
+ * This function handles the end of a `if`
+ * statement by filling the previous jump
+ */
 export function handleIfEnd() {
   const end = safePop(symbolTable.jumpsStack);
   fillQuadruple(end, String(symbolTable.quadCount));
 }
 
+/**
+ * This function pushes the current quadruple count to the
+ * jump stack. This is usefull for when we want to jump back
+ * to the start of a loop
+ */
 export function handleLoopStart() {
   symbolTable.jumpsStack.push(symbolTable.quadCount);
 }
 
+/**
+ * This function handles jumping back to the beginning
+ * of a loop condition and also fills the quadruple for
+ * jumping if the condition fails
+ */
 export function handleLoopEnd() {
   const jumpFalse = safePop(symbolTable.jumpsStack);
   const jumpBegin = safePop(symbolTable.jumpsStack);
@@ -647,21 +744,30 @@ export function handleLoopEnd() {
   fillQuadruple(jumpFalse, String(symbolTable.quadCount));
 }
 
+/**
+ * This function handles the assignation of a variable that will
+ * work as an iterator for a `for` statement loop.
+ * @returns `string`
+ */
 export function handleForAssign() {
+  // Optain initial value operand information
   const initialValueOperand = safePop(symbolTable.operandStack);
   const initialValueType = safePop(symbolTable.typeStack);
   const initialValueAddr = safePop(symbolTable.addrStack);
 
+  // Only `int` values can work as iterators
   if (initialValueType !== 'int') {
     throw new Error(
       `For statement expects an assigment of type 'int' but got type ${initialValueType}`
     );
   }
 
+  // Obtain iterator operand information
   const iteratorOperand = safePop(symbolTable.operandStack);
   const iteratorType = safePop(symbolTable.typeStack);
   const iteratorAddr = safePop(symbolTable.addrStack);
 
+  // Assert type
   if (initialValueType !== iteratorType) {
     throw new Error(
       `Can't assign variable '${iteratorOperand}' of type ${iteratorType} value of type ${initialValueType}`
@@ -681,16 +787,25 @@ export function handleForAssign() {
     }
   );
 
+  // Push current quad count for jumping back
   symbolTable.jumpsStack.push(symbolTable.quadCount);
 
   return iteratorOperand;
 }
 
+/**
+ * This function handles the condition expression for a `for` statement
+ * loop
+ *
+ * @param iteratorVarName `string`
+ */
 export function handleForCompare(iteratorVarName: string) {
+  // Obtain result expression information
   const expressionOperand = safePop(symbolTable.operandStack);
   const expressionType = safePop(symbolTable.typeStack);
   const expressionAddr = safePop(symbolTable.addrStack);
 
+  // Assert type
   if (expressionType !== 'int') {
     throw new Error(
       `For statement expects an iterable of type 'int' but got type ${expressionType}`
@@ -699,12 +814,17 @@ export function handleForCompare(iteratorVarName: string) {
 
   const iteratorVar = getVar(iteratorVarName);
 
+  // Assert type assignation to iterator
   if (expressionType !== iteratorVar.type) {
     throw new Error(
       `Can't assign variable '${iteratorVar.name}' of type ${iteratorVar.type} value of type ${expressionType}`
     );
   }
 
+  /*
+    Generate a new operation that will work as the condition
+    validation for the `for` statement loop
+  */
   const newTemp = getNewTemp();
   let newTempAddr = String(
     symbolTable.currentMemory!.getNextAddressFor('localIntTemporal')
@@ -726,6 +846,7 @@ export function handleForCompare(iteratorVarName: string) {
     }
   );
 
+  // Jump if the condition is false
   addQuadruple(
     {
       op: 'GOTOF',
@@ -737,10 +858,14 @@ export function handleForCompare(iteratorVarName: string) {
       leftOp: newTemp,
     }
   );
-
   symbolTable.jumpsStack.push(symbolTable.quadCount - 1);
 }
 
+/**
+ * This function handles the end of a `for` statement loop.
+ * It generates a GOTO to the beginning of the loop and fills
+ * the previous jump for the GOTOF jump
+ */
 export function handleForEnd() {
   const jumpFalse = safePop(symbolTable.jumpsStack);
   const jumpBegin = safePop(symbolTable.jumpsStack);
@@ -755,6 +880,10 @@ export function handleForEnd() {
   fillQuadruple(jumpFalse, String(symbolTable.quadCount));
 }
 
+/**
+ * This function handles jumping to the `main`
+ * function by filling the first jump quadruple
+ */
 export function handleBeginMain() {
   const jumpMain = safePop(symbolTable.jumpsStack);
   symbolTable.currentFunc = symbolTable.globalFunc;
@@ -763,6 +892,14 @@ export function handleBeginMain() {
   fillQuadruple(jumpMain, String(symbolTable.quadCount));
 }
 
+/**
+ * Asserts that a function call can be performed by checking
+ * if the function exists. Also pushes a 'fake bottom' to the
+ * operands stack so that the function call arguments can be
+ * correctly handled.
+ *
+ * @param funcName `string`
+ */
 export function handleCheckFuncCall(funcName: string) {
   if (symbolTable.funcDir[funcName] === undefined) {
     throw new Error(
@@ -773,6 +910,15 @@ export function handleCheckFuncCall(funcName: string) {
   symbolTable.operandStack.push('callFunc');
 }
 
+/**
+ * Handles the necessary operations for a function call.
+ * This involves generating the functions memory,
+ * validating and assigning parameters, performing the
+ * function call, and finally if the function has a return, it
+ * assigns the return value to a new temporal.
+ *
+ * @param funcName `string`
+ */
 export function handleFuncCall(funcName: string) {
   const funcToCall = symbolTable.funcDir[funcName];
 
@@ -784,8 +930,10 @@ export function handleFuncCall(funcName: string) {
   });
 
   if (funcToCall.params.length) {
+    // Utility stack for storing the arguments information
     const argsStack = new Stack<[string, Types, string]>();
 
+    // Obtain arguments
     while (symbolTable.operandStack.peek() !== 'callFunc') {
       const arg = safePop(symbolTable.operandStack);
       const argType = safePop(symbolTable.typeStack);
@@ -794,6 +942,7 @@ export function handleFuncCall(funcName: string) {
       argsStack.push([arg, argType, argAddr]);
     }
 
+    // Validate correct number of arguments and parameters
     if (argsStack.size > funcToCall.params.length) {
       throw new Error(
         `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${symbolTable.operandStack.size}`
@@ -806,6 +955,7 @@ export function handleFuncCall(funcName: string) {
       );
     }
 
+    // Assign each argument to its corresponding parameter
     funcToCall.params.forEach((paramAddr, paramIndex) => {
       const [arg, argType, argAddr] = safePop(argsStack);
       const paramScope = getVarScopeFromAddress(paramAddr);
@@ -816,6 +966,7 @@ export function handleFuncCall(funcName: string) {
 
       const paramType = getVarTypeFromVarScope(paramScope);
 
+      // Assert type
       if (argType !== paramType) {
         throw new Error(
           `Error: param mismatch. '${funcToCall.name}' call sends an argument of type '${argType}' when it expects a '${paramType}' on parameter #${paramIndex}`
@@ -847,9 +998,14 @@ export function handleFuncCall(funcName: string) {
     res: String(funcToCall.beginAddr),
   });
 
+  /*
+    If function returns a value, it assigns that return (which is going to
+    be stored in a global variable) to a new temporal. (parche guadalupano)
+  */
   if (funcToCall.returnType !== 'void') {
     const funcGlobalVar = getVar(funcToCall.name);
 
+    // New temporal
     const newTemp = getNewTemp();
     let pointer: VarScope;
     if (funcGlobalVar.type === 'int') {
@@ -869,6 +1025,7 @@ export function handleFuncCall(funcName: string) {
     symbolTable.addrStack.push(resAddr);
     symbolTable.typeStack.push(funcGlobalVar.type);
 
+    // Return value is stored in global variable
     symbolTable.operandStack.push(funcGlobalVar.name);
     symbolTable.addrStack.push(String(funcGlobalVar.addr));
     symbolTable.typeStack.push(funcGlobalVar.type);
@@ -877,21 +1034,30 @@ export function handleFuncCall(funcName: string) {
   }
 }
 
+/**
+ * This function handles the return statement of a function by asserting
+ * that the function can return, and that its return type is correct, and
+ * at the end generates the corresponding quadruple.
+ */
 export function handleFuncReturn() {
+  // Main function can't return
   if (symbolTable.currentFunc.isGlobal) {
     throw new Error(`Error: cannot return from the main function`);
   }
 
+  // Void functions can't return
   if (symbolTable.currentFunc.returnType === 'void') {
     throw new Error(
       `Error: cannot return from function '${symbolTable.currentFunc.name}' because it is a void function`
     );
   }
 
+  // Obtain return operand information
   const valueOperand = safePop(symbolTable.operandStack);
   const valueType = safePop(symbolTable.typeStack);
   const valueAddr = safePop(symbolTable.addrStack);
 
+  // Assert return type
   if (valueType !== symbolTable.currentFunc.returnType) {
     throw new Error(
       `Error: return type mismatch. Function '${symbolTable.currentFunc.name}' expects to return a value of type ${symbolTable.currentFunc.returnType} but tried to return a value of type '${valueType}'`
@@ -921,11 +1087,19 @@ export function handleFuncReturn() {
   );
 }
 
+/**
+ * This function performs the necessary operations for indexing an array
+ * by its first dimension.
+ *
+ * @param id `string`
+ */
 export function handleArrFirstDim(id: string) {
+  // Obtain index operand information
   const valueOperand = safePop(symbolTable.operandStack);
   const valueType = safePop(symbolTable.typeStack);
   const valueAddr = safePop(symbolTable.addrStack);
 
+  // Assert index type
   if (valueType !== 'int') {
     throw new Error(`Error: arrays must be indexed using only 'int' values`);
   }
@@ -936,6 +1110,7 @@ export function handleArrFirstDim(id: string) {
   }
   const firstDim = varInfo.dims[0];
 
+  // Verify bounds
   addQuadruple(
     {
       op: 'VERIFY',
@@ -948,6 +1123,10 @@ export function handleArrFirstDim(id: string) {
     }
   );
 
+  /*
+    If the array has 2 dimensions, it multiples the first dimension by the
+    array 'm' value.
+  */
   if (firstDim.m !== '0') {
     const newTemp = getNewTemp();
     const resAddr = String(
@@ -957,6 +1136,7 @@ export function handleArrFirstDim(id: string) {
 
     const constantAddr = declareConstant(firstDim.m, 'int');
 
+    // s1 * m1
     addQuadruple(
       {
         op: 'MULT',
@@ -981,11 +1161,19 @@ export function handleArrFirstDim(id: string) {
   }
 }
 
+/**
+ * This function performs the necessary operations for indexing an array
+ * by its second dimension.
+ *
+ * @param id `string`
+ */
 export function handleArrSecondDim(id: string) {
+  // Obtain index operand information
   const valueOperand = safePop(symbolTable.operandStack);
   const valueType = safePop(symbolTable.typeStack);
   const valueAddr = safePop(symbolTable.addrStack);
 
+  // Assert index type
   if (valueType !== 'int') {
     throw new Error(`Error: arrays must be indexed using only 'int' values`);
   }
@@ -996,6 +1184,7 @@ export function handleArrSecondDim(id: string) {
   }
   const secondDim = varInfo.dims[1];
 
+  // Verify bounds
   addQuadruple(
     {
       op: 'VERIFY',
@@ -1009,7 +1198,7 @@ export function handleArrSecondDim(id: string) {
   );
 
   const offsetOperand = safePop(symbolTable.operandStack);
-  const offsetType = safePop(symbolTable.typeStack);
+  safePop(symbolTable.typeStack);
   const offsetAddr = safePop(symbolTable.addrStack);
 
   const newTemp = getNewTemp();
@@ -1018,6 +1207,7 @@ export function handleArrSecondDim(id: string) {
   );
   symbolTable.currentFunc.size['localIntTemporal']++;
 
+  // s2 + (s1 * m1)
   addQuadruple(
     {
       op: 'SUM',
@@ -1037,11 +1227,20 @@ export function handleArrSecondDim(id: string) {
   symbolTable.typeStack.push('int');
 }
 
+/**
+ * This function handles adding the array base direction to the
+ * previously calculated index value, this will result in a new
+ * pointer temporal.
+ *
+ * @param id `string`
+ */
 export function handleSumArrDirBase(id: string) {
+  // Obtain index operand information
   const valueOperand = safePop(symbolTable.operandStack);
   const valueType = safePop(symbolTable.typeStack);
   const valueAddr = safePop(symbolTable.addrStack);
 
+  // Assert type
   if (valueType !== 'int') {
     throw new Error(`Error: arrays must be indexed using only 'int' values`);
   }
@@ -1051,6 +1250,7 @@ export function handleSumArrDirBase(id: string) {
     throw new Error(`Error: tried to index a variable that is not an array`);
   }
 
+  // Declare new pointer temporal
   let scope: PointerScope;
   if (varInfo.type === 'int') {
     scope = 'pointerInt';
@@ -1085,6 +1285,9 @@ export function handleSumArrDirBase(id: string) {
   symbolTable.typeStack.push(varInfo.type);
 }
 
+/**
+ * Handle end of program
+ */
 export function handleEndMain() {
   symbolTable.globalFunc.vars = null;
 
