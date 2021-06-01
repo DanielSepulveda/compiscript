@@ -383,6 +383,13 @@ export const semanticCube: SemanticCube = {
   or: orDict,
 };
 
+/**
+ * Given an operation expression (operation, left operand, right operand),
+ * this function determines the result type by using the semanticCube.
+ *
+ * @param exp `OperationExpression`
+ * @returns `OperandResultType`
+ */
 export function getOperationResultType(exp: OperationExpression) {
   const res = semanticCube[exp.op][exp.left][exp.right];
 
