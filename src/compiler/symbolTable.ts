@@ -14,67 +14,78 @@ import {
 import * as semanticCube from './semanticCube';
 import Memory from './compilationMemory';
 import { checkIfCanAssignType } from './assignTable';
-import { OPERATORS, QUADRUPLE_OPERATIONS } from '../utils/constants';
+import { QUADRUPLE_OPERATIONS } from '../utils/constants';
 import {
-  jsonLog,
-  jsonStringify,
   getVarScopeFromAddress,
   getVarTypeFromVarScope,
   safePop,
   isVariable,
 } from '../utils/helpers';
-import * as logger from './logger';
 
 /* -------------------------------------------------------------------------- */
 /*                                  Internals                                 */
 /* -------------------------------------------------------------------------- */
 
-let funcDir: FuncDir = {};
+export class SymbolTable {
+  funcDir: FuncDir;
+  globalFunc: Func;
+  currentFunc: Func;
 
-let globalFunc: Func = {
-  name: '',
-  returnType: 'void',
-  vars: {},
-  params: [],
-  size: generateFunctionSize(),
-  isGlobal: true,
-};
-let globalMemory = new Memory();
+  globalMemory: Memory;
+  currentMemory: Memory | null;
 
-let currentFunc: Func = globalFunc;
-let currentMemory: Memory | null = globalMemory;
+  constants: Record<string, number>;
 
-let constants: Record<string, number> = {};
+  operatorStack: Stack<Operators>;
+  operandStack: Stack<string>;
+  typeStack: Stack<VarTypes>;
+  jumpsStack: Stack<number>;
+  addrStack: Stack<string>;
 
-let operatorStack = new Stack<Operators>();
-let operandStack = new Stack<string>();
-let typeStack = new Stack<VarTypes>();
-let jumpsStack = new Stack<number>();
-let addrStack = new Stack<string>();
+  quadrupleArr: Quadruple[];
 
-const stacks = {
-  operatorStack,
-  operandStack,
-  typeStack,
-  jumpsStack,
-  addrStack,
-};
+  tempCount: number;
+  quadCount: number;
 
-let quadrupleArr: Quadruple[] = [];
+  constructor() {
+    this.funcDir = {};
+    this.globalFunc = {
+      name: '',
+      returnType: 'void',
+      vars: {},
+      params: [],
+      size: generateFunctionSize(),
+      isGlobal: true,
+    };
+    this.currentFunc = this.globalFunc;
 
-let tempCount = 0;
-let quadCount = 0;
+    this.globalMemory = new Memory();
+    this.currentMemory = this.globalMemory;
 
-export let internal = {
-  funcDir,
-  globalFunc,
-  constants,
-  currentFunc,
-  stacks,
-  quadrupleArr,
-  tempCount,
-  quadCount,
-};
+    this.constants = {};
+
+    this.operatorStack = new Stack();
+    this.operandStack = new Stack();
+    this.typeStack = new Stack();
+    this.jumpsStack = new Stack();
+    this.addrStack = new Stack();
+
+    this.quadrupleArr = [];
+
+    this.tempCount = 0;
+    this.quadCount = 0;
+  }
+}
+
+let symbolTable: SymbolTable;
+
+export function init() {
+  symbolTable = new SymbolTable();
+}
+
+export function getSymbolTable() {
+  return symbolTable;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                   Methods                                  */
@@ -87,20 +98,22 @@ export let internal = {
  * @param isGlobal
  */
 export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
-  if (funcDir[name]) {
+  if (symbolTable.funcDir[name]) {
     throw new Error(`Function ${name} already declared`);
   }
 
   if (isGlobal) {
-    globalFunc.name = name;
-    funcDir[name] = globalFunc;
+    symbolTable.globalFunc.name = name;
+    symbolTable.funcDir[name] = symbolTable.globalFunc;
+
     addQuadruple({
       op: 'GOTO',
       left: '-1',
       right: '-1',
       res: '-1',
     });
-    jumpsStack.push(quadCount - 1);
+
+    symbolTable.jumpsStack.push(symbolTable.quadCount - 1);
     return;
   }
 
@@ -113,10 +126,10 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
     isGlobal: false,
   };
 
-  funcDir[name] = newFunc;
-  currentFunc = newFunc;
-  currentMemory = new Memory();
-  currentFunc.beginAddr = quadCount;
+  symbolTable.funcDir[name] = newFunc;
+  symbolTable.currentFunc = newFunc;
+  symbolTable.currentMemory = new Memory();
+  symbolTable.currentFunc.beginAddr = symbolTable.quadCount;
 
   if (type !== 'void') {
     let pointer: VarScope;
@@ -128,10 +141,10 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
       pointer = 'globalString';
     }
 
-    const addr = globalMemory.getNextAddressFor(pointer);
-    globalFunc.size![pointer]++;
+    const addr = symbolTable.globalMemory.getNextAddressFor(pointer);
+    symbolTable.globalFunc.size![pointer]++;
 
-    globalFunc.vars![name] = {
+    symbolTable.globalFunc.vars![name] = {
       name,
       type,
       addr,
@@ -141,9 +154,9 @@ export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
 }
 
 export function handleFuncEnd() {
-  currentFunc.vars = null;
-  currentMemory = null;
-  tempCount = 0;
+  symbolTable.currentFunc.vars = null;
+  symbolTable.currentMemory = null;
+  symbolTable.tempCount = 0;
 
   addQuadruple({
     op: 'ENDFUNC',
@@ -159,7 +172,7 @@ export function handleFuncEnd() {
  * @returns Returns true if it finds a function
  */
 export function checkIfFuncExists(name: string) {
-  return funcDir[name] !== undefined;
+  return symbolTable.funcDir[name] !== undefined;
 }
 
 /**
@@ -168,7 +181,7 @@ export function checkIfFuncExists(name: string) {
  * @returns
  */
 export function checkIfVarIsDefined(name: string) {
-  const currentVarTable = currentFunc.vars;
+  const currentVarTable = symbolTable.currentFunc.vars;
 
   if (currentVarTable && currentVarTable[name] !== undefined) return true;
 
@@ -184,7 +197,7 @@ export function checkIfVarExists(name: string) {
   const isInScope = checkIfVarIsDefined(name);
   if (isInScope) return true;
 
-  const globalVarTable = globalFunc.vars;
+  const globalVarTable = symbolTable.globalFunc.vars;
   if (globalVarTable && globalVarTable[name] !== undefined) return true;
 
   return false;
@@ -214,14 +227,16 @@ function generateFunctionSize(): Func['size'] {
  * @param dims
  */
 export function addVar(name: string, type: VarTypes, dims?: VarDims[]) {
-  const currentVarTable = currentFunc.vars;
+  const currentVarTable = symbolTable.currentFunc.vars;
 
   if (!currentVarTable)
-    throw new Error(`Internal error: ${currentFunc.name} var table is null`);
+    throw new Error(
+      `Internal error: ${symbolTable.currentFunc.name} var table is null`
+    );
 
   let addr;
   let scope: VarScope;
-  if (currentFunc.isGlobal) {
+  if (symbolTable.currentFunc.isGlobal) {
     if (type === 'int') {
       scope = 'globalInt';
     } else if (type === 'float') {
@@ -239,12 +254,12 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims[]) {
     }
   }
 
-  addr = currentMemory!.getNextAddressFor(scope);
-  currentFunc.size[scope]++;
+  addr = symbolTable.currentMemory!.getNextAddressFor(scope);
+  symbolTable.currentFunc.size[scope]++;
   if (dims) {
     let size = dims.reduce((prev, curr) => prev * (parseInt(curr.sup) + 1), 1);
-    currentMemory!.sumCounterBy(scope, size - 1);
-    currentFunc.size[scope] += size - 1;
+    symbolTable.currentMemory!.sumCounterBy(scope, size - 1);
+    symbolTable.currentFunc.size[scope] += size - 1;
   }
 
   currentVarTable[name] = {
@@ -257,14 +272,16 @@ export function addVar(name: string, type: VarTypes, dims?: VarDims[]) {
 }
 
 export function addFunctionParam(name: string) {
-  const currentVarTable = currentFunc.vars;
+  const currentVarTable = symbolTable.currentFunc.vars;
 
   if (!currentVarTable)
-    throw new Error(`Internal error: ${currentFunc.name} var table is null`);
+    throw new Error(
+      `Internal error: ${symbolTable.currentFunc.name} var table is null`
+    );
 
   const paramAddr = currentVarTable[name].addr;
 
-  currentFunc.params.push(paramAddr);
+  symbolTable.currentFunc.params.push(paramAddr);
 }
 
 /**
@@ -285,10 +302,10 @@ export function getVar(name: string) {
   // check
 
   if (isInLocalScope) {
-    return currentFunc.vars![name];
+    return symbolTable.currentFunc.vars![name];
   }
 
-  return globalFunc.vars![name];
+  return symbolTable.globalFunc.vars![name];
 }
 
 function markVarWithValue(name: string) {
@@ -302,7 +319,7 @@ function checkIfVarHasValue(name: string) {
 }
 
 export function getNewTemp() {
-  return `t${++tempCount}`;
+  return `t${++symbolTable.tempCount}`;
 }
 
 /**
@@ -310,7 +327,7 @@ export function getNewTemp() {
  * @param op
  */
 export function pushOperator(op: Operators) {
-  operatorStack.push(op);
+  symbolTable.operatorStack.push(op);
 }
 
 /**
@@ -320,26 +337,30 @@ export function pushOperator(op: Operators) {
 export function pushIdOperand(name: string) {
   const operand = getVar(name);
 
-  operandStack.push(operand.name);
-  addrStack.push(String(operand.addr));
-  typeStack.push(operand.type);
+  symbolTable.operandStack.push(operand.name);
+  symbolTable.addrStack.push(String(operand.addr));
+  symbolTable.typeStack.push(operand.type);
 }
 
 export function declareConstant(name: string, type: VarTypes) {
   let constantAddr: number;
 
-  const isConstantInMemory = constants[name] !== undefined;
+  const isConstantInMemory = symbolTable.constants[name] !== undefined;
   if (!isConstantInMemory) {
     if (type === 'int') {
-      constantAddr = globalMemory.getNextAddressFor('constantInt');
+      constantAddr = symbolTable.globalMemory.getNextAddressFor('constantInt');
     } else if (type === 'float') {
-      constantAddr = globalMemory.getNextAddressFor('constantFloat');
+      constantAddr = symbolTable.globalMemory.getNextAddressFor(
+        'constantFloat'
+      );
     } else {
-      constantAddr = globalMemory.getNextAddressFor('constantString');
+      constantAddr = symbolTable.globalMemory.getNextAddressFor(
+        'constantString'
+      );
     }
-    constants[name] = constantAddr;
+    symbolTable.constants[name] = constantAddr;
   } else {
-    constantAddr = constants[name];
+    constantAddr = symbolTable.constants[name];
   }
 
   return constantAddr;
@@ -348,9 +369,9 @@ export function declareConstant(name: string, type: VarTypes) {
 export function pushLiteralOperand(name: string, type: VarTypes) {
   const constantAddr = declareConstant(name, type);
 
-  operandStack.push(name);
-  addrStack.push(String(constantAddr));
-  typeStack.push(type);
+  symbolTable.operandStack.push(name);
+  symbolTable.addrStack.push(String(constantAddr));
+  symbolTable.typeStack.push(type);
 }
 
 /**
@@ -379,7 +400,7 @@ export function addQuadruple(
 ) {
   let newQuadruple: Quadruple = {
     ...newQuad,
-    count: quadCount++,
+    count: symbolTable.quadCount++,
   };
 
   if (process.env.TEST_COMPILER == 'true') {
@@ -394,45 +415,26 @@ export function addQuadruple(
     }
   }
 
-  quadrupleArr.push(newQuadruple);
+  symbolTable.quadrupleArr.push(newQuadruple);
 }
 
 /**
  * Performs an arithmetic operation and generates a new quadruple
  */
 export function performOperation() {
-  const operator = operatorStack.pop();
+  const operator = symbolTable.operatorStack.pop();
 
   if (operator === undefined) {
     throw new Error('Undefined operator');
   }
 
-  const rightOperand = safePop(operandStack);
-  const rightType = safePop(typeStack);
-  const rightAddr = safePop(addrStack);
+  const rightOperand = safePop(symbolTable.operandStack);
+  const rightType = safePop(symbolTable.typeStack);
+  const rightAddr = safePop(symbolTable.addrStack);
 
-  // Mejor hacer en vm
-  // if (isVariable(parseInt(rightAddr))) {
-  //   const hasValue = checkIfVarHasValue(rightOperand);
-  //   if (!hasValue) {
-  //     throw new Error(
-  //       `Error: variable ${rightOperand} was used before it was assigned a value.`
-  //     );
-  //   }
-  // }
-
-  const leftOperand = safePop(operandStack);
-  const leftType = safePop(typeStack);
-  const leftAddr = safePop(addrStack);
-
-  // if (isVariable(parseInt(leftAddr))) {
-  //   const hasValue = checkIfVarHasValue(leftOperand);
-  //   if (!hasValue) {
-  //     throw new Error(
-  //       `Error: variable ${leftOperand} was used before it was assigned a value.`
-  //     );
-  //   }
-  // }
+  const leftOperand = safePop(symbolTable.operandStack);
+  const leftType = safePop(symbolTable.typeStack);
+  const leftAddr = safePop(symbolTable.addrStack);
 
   const resType = getOperationResultType({
     left: leftType,
@@ -444,14 +446,20 @@ export function performOperation() {
   let resAddr: string;
 
   if (resType === 'int') {
-    resAddr = String(currentMemory!.getNextAddressFor('localIntTemporal'));
-    currentFunc.size['localIntTemporal']++;
+    resAddr = String(
+      symbolTable.currentMemory!.getNextAddressFor('localIntTemporal')
+    );
+    symbolTable.currentFunc.size['localIntTemporal']++;
   } else if (resType === 'float') {
-    resAddr = String(currentMemory!.getNextAddressFor('localFloatTemporal'));
-    currentFunc.size['localFloatTemporal']++;
+    resAddr = String(
+      symbolTable.currentMemory!.getNextAddressFor('localFloatTemporal')
+    );
+    symbolTable.currentFunc.size['localFloatTemporal']++;
   } else {
-    resAddr = String(currentMemory!.getNextAddressFor('localStringTemporal'));
-    currentFunc.size['localStringTemporal']++;
+    resAddr = String(
+      symbolTable.currentMemory!.getNextAddressFor('localStringTemporal')
+    );
+    symbolTable.currentFunc.size['localStringTemporal']++;
   }
 
   addQuadruple(
@@ -464,15 +472,15 @@ export function performOperation() {
     { leftOp: leftOperand, rightOp: rightOperand, resOp: newTemp }
   );
 
-  operandStack.push(newTemp);
-  addrStack.push(resAddr);
-  typeStack.push(resType);
+  symbolTable.operandStack.push(newTemp);
+  symbolTable.addrStack.push(resAddr);
+  symbolTable.typeStack.push(resType);
 }
 
 export function performAssign({ isReturn = false } = {}) {
-  const valueOperand = safePop(operandStack);
-  const valueType = safePop(typeStack);
-  const valueAddr = safePop(addrStack);
+  const valueOperand = safePop(symbolTable.operandStack);
+  const valueType = safePop(symbolTable.typeStack);
+  const valueAddr = safePop(symbolTable.addrStack);
 
   // if (isVariable(parseInt(valueAddr))) {
   //   const hasValue = checkIfVarHasValue(valueOperand);
@@ -483,9 +491,9 @@ export function performAssign({ isReturn = false } = {}) {
   //   }
   // }
 
-  const resOperand = safePop(operandStack);
-  const resType = safePop(typeStack);
-  const resAddr = safePop(addrStack);
+  const resOperand = safePop(symbolTable.operandStack);
+  const resType = safePop(symbolTable.typeStack);
+  const resAddr = safePop(symbolTable.addrStack);
 
   const canAssignType = checkIfCanAssignType({
     variable: resType,
@@ -516,16 +524,16 @@ export function performAssign({ isReturn = false } = {}) {
   );
 
   if (isReturn) {
-    operandStack.push(resOperand);
-    typeStack.push(resType);
-    addrStack.push(resAddr);
+    symbolTable.operandStack.push(resOperand);
+    symbolTable.typeStack.push(resType);
+    symbolTable.addrStack.push(resAddr);
   }
 }
 
 export function performPrint() {
-  const valueOperand = safePop(operandStack);
-  safePop(typeStack);
-  const valueAddr = safePop(addrStack);
+  const valueOperand = safePop(symbolTable.operandStack);
+  safePop(symbolTable.typeStack);
+  const valueAddr = safePop(symbolTable.addrStack);
 
   addQuadruple(
     {
@@ -550,9 +558,9 @@ export function performPrintLn() {
 }
 
 export function performRead() {
-  const operand = safePop(operandStack);
-  const operandType = safePop(typeStack);
-  const operandAddr = safePop(addrStack);
+  const operand = safePop(symbolTable.operandStack);
+  const operandType = safePop(symbolTable.typeStack);
+  const operandAddr = safePop(symbolTable.addrStack);
 
   addQuadruple(
     {
@@ -568,7 +576,7 @@ export function performRead() {
 }
 
 export function validateConditionExpression() {
-  const condType = typeStack.pop();
+  const condType = symbolTable.typeStack.pop();
 
   if (!condType || condType !== 'int') {
     throw new Error(
@@ -578,16 +586,16 @@ export function validateConditionExpression() {
 }
 
 export function fillQuadruple(quad: number, value: string) {
-  const quadToFill = quadrupleArr[quad];
+  const quadToFill = symbolTable.quadrupleArr[quad];
   quadToFill.res = value;
-  quadrupleArr[quad] = quadToFill;
+  symbolTable.quadrupleArr[quad] = quadToFill;
 }
 
 export function handleCondition() {
   validateConditionExpression();
 
-  const condRes = safePop(operandStack);
-  const condAddr = safePop(addrStack);
+  const condRes = safePop(symbolTable.operandStack);
+  const condAddr = safePop(symbolTable.addrStack);
 
   addQuadruple(
     {
@@ -601,33 +609,33 @@ export function handleCondition() {
     }
   );
 
-  jumpsStack.push(quadCount - 1);
+  symbolTable.jumpsStack.push(symbolTable.quadCount - 1);
 }
 
 export function handleIfElse() {
-  const jumpFalse = safePop(jumpsStack);
+  const jumpFalse = safePop(symbolTable.jumpsStack);
   addQuadruple({
     op: 'GOTO',
     left: '-1',
     right: '-1',
     res: '-1',
   });
-  jumpsStack.push(quadCount - 1);
-  fillQuadruple(jumpFalse, String(quadCount));
+  symbolTable.jumpsStack.push(symbolTable.quadCount - 1);
+  fillQuadruple(jumpFalse, String(symbolTable.quadCount));
 }
 
 export function handleIfEnd() {
-  const end = safePop(jumpsStack);
-  fillQuadruple(end, String(quadCount));
+  const end = safePop(symbolTable.jumpsStack);
+  fillQuadruple(end, String(symbolTable.quadCount));
 }
 
 export function handleLoopStart() {
-  jumpsStack.push(quadCount);
+  symbolTable.jumpsStack.push(symbolTable.quadCount);
 }
 
 export function handleLoopEnd() {
-  const jumpFalse = safePop(jumpsStack);
-  const jumpBegin = safePop(jumpsStack);
+  const jumpFalse = safePop(symbolTable.jumpsStack);
+  const jumpBegin = safePop(symbolTable.jumpsStack);
 
   addQuadruple({
     op: 'GOTO',
@@ -636,13 +644,13 @@ export function handleLoopEnd() {
     res: String(jumpBegin),
   });
 
-  fillQuadruple(jumpFalse, String(quadCount));
+  fillQuadruple(jumpFalse, String(symbolTable.quadCount));
 }
 
 export function handleForAssign() {
-  const initialValueOperand = safePop(operandStack);
-  const initialValueType = safePop(typeStack);
-  const initialValueAddr = safePop(addrStack);
+  const initialValueOperand = safePop(symbolTable.operandStack);
+  const initialValueType = safePop(symbolTable.typeStack);
+  const initialValueAddr = safePop(symbolTable.addrStack);
 
   if (initialValueType !== 'int') {
     throw new Error(
@@ -650,9 +658,9 @@ export function handleForAssign() {
     );
   }
 
-  const iteratorOperand = safePop(operandStack);
-  const iteratorType = safePop(typeStack);
-  const iteratorAddr = safePop(addrStack);
+  const iteratorOperand = safePop(symbolTable.operandStack);
+  const iteratorType = safePop(symbolTable.typeStack);
+  const iteratorAddr = safePop(symbolTable.addrStack);
 
   if (initialValueType !== iteratorType) {
     throw new Error(
@@ -673,15 +681,15 @@ export function handleForAssign() {
     }
   );
 
-  jumpsStack.push(quadCount);
+  symbolTable.jumpsStack.push(symbolTable.quadCount);
 
   return iteratorOperand;
 }
 
 export function handleForCompare(iteratorVarName: string) {
-  const expressionOperand = safePop(operandStack);
-  const expressionType = safePop(typeStack);
-  const expressionAddr = safePop(addrStack);
+  const expressionOperand = safePop(symbolTable.operandStack);
+  const expressionType = safePop(symbolTable.typeStack);
+  const expressionAddr = safePop(symbolTable.addrStack);
 
   if (expressionType !== 'int') {
     throw new Error(
@@ -699,10 +707,10 @@ export function handleForCompare(iteratorVarName: string) {
 
   const newTemp = getNewTemp();
   let newTempAddr = String(
-    currentMemory!.getNextAddressFor('localIntTemporal')
+    symbolTable.currentMemory!.getNextAddressFor('localIntTemporal')
   );
 
-  currentFunc.size['localIntTemporal']++;
+  symbolTable.currentFunc.size['localIntTemporal']++;
 
   addQuadruple(
     {
@@ -730,12 +738,12 @@ export function handleForCompare(iteratorVarName: string) {
     }
   );
 
-  jumpsStack.push(quadCount - 1);
+  symbolTable.jumpsStack.push(symbolTable.quadCount - 1);
 }
 
 export function handleForEnd() {
-  const jumpFalse = safePop(jumpsStack);
-  const jumpBegin = safePop(jumpsStack);
+  const jumpFalse = safePop(symbolTable.jumpsStack);
+  const jumpBegin = safePop(symbolTable.jumpsStack);
 
   addQuadruple({
     op: 'GOTO',
@@ -744,19 +752,29 @@ export function handleForEnd() {
     res: String(jumpBegin),
   });
 
-  fillQuadruple(jumpFalse, String(quadCount));
+  fillQuadruple(jumpFalse, String(symbolTable.quadCount));
 }
 
 export function handleBeginMain() {
-  const jumpMain = safePop(jumpsStack);
-  currentFunc = globalFunc;
-  currentMemory = globalMemory;
+  const jumpMain = safePop(symbolTable.jumpsStack);
+  symbolTable.currentFunc = symbolTable.globalFunc;
+  symbolTable.currentMemory = symbolTable.globalMemory;
 
-  fillQuadruple(jumpMain, String(quadCount));
+  fillQuadruple(jumpMain, String(symbolTable.quadCount));
+}
+
+export function handleCheckFuncCall(funcName: string) {
+  if (symbolTable.funcDir[funcName] === undefined) {
+    throw new Error(
+      `Error: function call on an undefined function '${funcName}'`
+    );
+  }
+
+  symbolTable.operandStack.push('callFunc');
 }
 
 export function handleFuncCall(funcName: string) {
-  const funcToCall = funcDir[funcName];
+  const funcToCall = symbolTable.funcDir[funcName];
 
   addQuadruple({
     op: 'ERA',
@@ -768,23 +786,23 @@ export function handleFuncCall(funcName: string) {
   if (funcToCall.params.length) {
     const argsStack = new Stack<[string, Types, string]>();
 
-    while (operandStack.peek() !== 'callFunc') {
-      const arg = safePop(operandStack);
-      const argType = safePop(typeStack);
-      const argAddr = safePop(addrStack);
+    while (symbolTable.operandStack.peek() !== 'callFunc') {
+      const arg = safePop(symbolTable.operandStack);
+      const argType = safePop(symbolTable.typeStack);
+      const argAddr = safePop(symbolTable.addrStack);
 
       argsStack.push([arg, argType, argAddr]);
     }
 
     if (argsStack.size > funcToCall.params.length) {
       throw new Error(
-        `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${operandStack.size}`
+        `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${symbolTable.operandStack.size}`
       );
     }
 
     if (argsStack.size < funcToCall.params.length) {
       throw new Error(
-        `Error: missing arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${operandStack.size}`
+        `Error: missing arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${symbolTable.operandStack.size}`
       );
     }
 
@@ -818,8 +836,8 @@ export function handleFuncCall(funcName: string) {
     });
   }
 
-  if (operandStack.peek() === 'callFunc') {
-    operandStack.pop();
+  if (symbolTable.operandStack.peek() === 'callFunc') {
+    symbolTable.operandStack.pop();
   }
 
   addQuadruple({
@@ -842,48 +860,52 @@ export function handleFuncCall(funcName: string) {
       pointer = 'localStringTemporal';
     }
 
-    const resAddr = String(currentMemory!.getNextAddressFor(pointer));
-    currentFunc.size![pointer]++;
+    const resAddr = String(
+      symbolTable.currentMemory!.getNextAddressFor(pointer)
+    );
+    symbolTable.currentFunc.size![pointer]++;
 
-    operandStack.push(newTemp);
-    addrStack.push(resAddr);
-    typeStack.push(funcGlobalVar.type);
+    symbolTable.operandStack.push(newTemp);
+    symbolTable.addrStack.push(resAddr);
+    symbolTable.typeStack.push(funcGlobalVar.type);
 
-    operandStack.push(funcGlobalVar.name);
-    addrStack.push(String(funcGlobalVar.addr));
-    typeStack.push(funcGlobalVar.type);
+    symbolTable.operandStack.push(funcGlobalVar.name);
+    symbolTable.addrStack.push(String(funcGlobalVar.addr));
+    symbolTable.typeStack.push(funcGlobalVar.type);
 
     performAssign({ isReturn: true });
   }
 }
 
 export function handleFuncReturn() {
-  if (currentFunc.isGlobal) {
+  if (symbolTable.currentFunc.isGlobal) {
     throw new Error(`Error: cannot return from the main function`);
   }
 
-  if (currentFunc.returnType === 'void') {
+  if (symbolTable.currentFunc.returnType === 'void') {
     throw new Error(
-      `Error: cannot return from function '${currentFunc.name}' because it is a void function`
+      `Error: cannot return from function '${symbolTable.currentFunc.name}' because it is a void function`
     );
   }
 
-  const valueOperand = safePop(operandStack);
-  const valueType = safePop(typeStack);
-  const valueAddr = safePop(addrStack);
+  const valueOperand = safePop(symbolTable.operandStack);
+  const valueType = safePop(symbolTable.typeStack);
+  const valueAddr = safePop(symbolTable.addrStack);
 
-  if (valueType !== currentFunc.returnType) {
+  if (valueType !== symbolTable.currentFunc.returnType) {
     throw new Error(
-      `Error: return type mismatch. Function '${currentFunc.name}' expects to return a value of type ${currentFunc.returnType} but tried to return a value of type '${valueType}'`
+      `Error: return type mismatch. Function '${symbolTable.currentFunc.name}' expects to return a value of type ${symbolTable.currentFunc.returnType} but tried to return a value of type '${valueType}'`
     );
   }
 
-  if (globalFunc.vars === null) {
+  if (symbolTable.globalFunc.vars === null) {
     throw new Error('Internal error: global func var table is null');
   }
 
-  const returnOperand = globalFunc.vars[currentFunc.name].name;
-  const returnAddr = globalFunc.vars[currentFunc.name].addr;
+  const returnOperand =
+    symbolTable.globalFunc.vars[symbolTable.currentFunc.name].name;
+  const returnAddr =
+    symbolTable.globalFunc.vars[symbolTable.currentFunc.name].addr;
 
   addQuadruple(
     {
@@ -900,9 +922,9 @@ export function handleFuncReturn() {
 }
 
 export function handleArrFirstDim(id: string) {
-  const valueOperand = safePop(operandStack);
-  const valueType = safePop(typeStack);
-  const valueAddr = safePop(addrStack);
+  const valueOperand = safePop(symbolTable.operandStack);
+  const valueType = safePop(symbolTable.typeStack);
+  const valueAddr = safePop(symbolTable.addrStack);
 
   if (valueType !== 'int') {
     throw new Error(`Error: arrays must be indexed using only 'int' values`);
@@ -929,9 +951,9 @@ export function handleArrFirstDim(id: string) {
   if (firstDim.m !== '0') {
     const newTemp = getNewTemp();
     const resAddr = String(
-      currentMemory!.getNextAddressFor('localIntTemporal')
+      symbolTable.currentMemory!.getNextAddressFor('localIntTemporal')
     );
-    currentFunc.size['localIntTemporal']++;
+    symbolTable.currentFunc.size['localIntTemporal']++;
 
     const constantAddr = declareConstant(firstDim.m, 'int');
 
@@ -949,20 +971,20 @@ export function handleArrFirstDim(id: string) {
       }
     );
 
-    operandStack.push(newTemp);
-    addrStack.push(resAddr);
-    typeStack.push('int');
+    symbolTable.operandStack.push(newTemp);
+    symbolTable.addrStack.push(resAddr);
+    symbolTable.typeStack.push('int');
   } else {
-    operandStack.push(valueOperand);
-    addrStack.push(valueAddr);
-    typeStack.push('int');
+    symbolTable.operandStack.push(valueOperand);
+    symbolTable.addrStack.push(valueAddr);
+    symbolTable.typeStack.push('int');
   }
 }
 
 export function handleArrSecondDim(id: string) {
-  const valueOperand = safePop(operandStack);
-  const valueType = safePop(typeStack);
-  const valueAddr = safePop(addrStack);
+  const valueOperand = safePop(symbolTable.operandStack);
+  const valueType = safePop(symbolTable.typeStack);
+  const valueAddr = safePop(symbolTable.addrStack);
 
   if (valueType !== 'int') {
     throw new Error(`Error: arrays must be indexed using only 'int' values`);
@@ -986,13 +1008,15 @@ export function handleArrSecondDim(id: string) {
     }
   );
 
-  const offsetOperand = safePop(operandStack);
-  const offsetType = safePop(typeStack);
-  const offsetAddr = safePop(addrStack);
+  const offsetOperand = safePop(symbolTable.operandStack);
+  const offsetType = safePop(symbolTable.typeStack);
+  const offsetAddr = safePop(symbolTable.addrStack);
 
   const newTemp = getNewTemp();
-  const resAddr = String(currentMemory!.getNextAddressFor('localIntTemporal'));
-  currentFunc.size['localIntTemporal']++;
+  const resAddr = String(
+    symbolTable.currentMemory!.getNextAddressFor('localIntTemporal')
+  );
+  symbolTable.currentFunc.size['localIntTemporal']++;
 
   addQuadruple(
     {
@@ -1008,15 +1032,15 @@ export function handleArrSecondDim(id: string) {
     }
   );
 
-  operandStack.push(newTemp);
-  addrStack.push(resAddr);
-  typeStack.push('int');
+  symbolTable.operandStack.push(newTemp);
+  symbolTable.addrStack.push(resAddr);
+  symbolTable.typeStack.push('int');
 }
 
 export function handleSumArrDirBase(id: string) {
-  const valueOperand = safePop(operandStack);
-  const valueType = safePop(typeStack);
-  const valueAddr = safePop(addrStack);
+  const valueOperand = safePop(symbolTable.operandStack);
+  const valueType = safePop(symbolTable.typeStack);
+  const valueAddr = safePop(symbolTable.addrStack);
 
   if (valueType !== 'int') {
     throw new Error(`Error: arrays must be indexed using only 'int' values`);
@@ -1039,8 +1063,8 @@ export function handleSumArrDirBase(id: string) {
   const constantAddr = declareConstant(String(varInfo.addr), 'int');
 
   const newTemp = getNewTemp();
-  let resAddr = currentMemory!.getNextAddressFor(scope);
-  currentFunc.size[scope]++;
+  let resAddr = symbolTable.currentMemory!.getNextAddressFor(scope);
+  symbolTable.currentFunc.size[scope]++;
 
   addQuadruple(
     {
@@ -1056,13 +1080,13 @@ export function handleSumArrDirBase(id: string) {
     }
   );
 
-  operandStack.push(newTemp);
-  addrStack.push(String(resAddr));
-  typeStack.push(varInfo.type);
+  symbolTable.operandStack.push(newTemp);
+  symbolTable.addrStack.push(String(resAddr));
+  symbolTable.typeStack.push(varInfo.type);
 }
 
 export function handleEndMain() {
-  globalFunc.vars = null;
+  symbolTable.globalFunc.vars = null;
 
   addQuadruple({
     op: 'END',
@@ -1070,46 +1094,4 @@ export function handleEndMain() {
     right: '-1',
     res: '-1',
   });
-}
-
-export function cleanup() {
-  funcDir = {};
-
-  globalFunc = {
-    name: '',
-    returnType: 'void',
-    vars: {},
-    params: [],
-    size: generateFunctionSize(),
-    isGlobal: true,
-  };
-
-  globalMemory = new Memory();
-
-  currentFunc = globalFunc;
-  currentMemory = globalMemory;
-
-  constants = {};
-
-  operatorStack.clear();
-  operandStack.clear();
-  typeStack.clear();
-  jumpsStack.clear();
-  addrStack.clear();
-
-  quadrupleArr = [];
-
-  tempCount = 0;
-  quadCount = 0;
-
-  internal = {
-    funcDir,
-    globalFunc,
-    constants,
-    currentFunc,
-    stacks,
-    quadrupleArr,
-    tempCount,
-    quadCount,
-  };
 }

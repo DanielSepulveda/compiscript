@@ -1,6 +1,5 @@
 import grammar from '../grammar';
 import * as symbolTable from './symbolTable';
-import { jsonLog } from '../utils/helpers';
 import { Var, VarTypes, VarDims } from '../types';
 import { OPERATORS } from '../utils/constants';
 
@@ -55,11 +54,7 @@ const s = grammar.createSemantics().addOperation('applySemantics', {
   CallExpression(identifier, _1, args, _2) {
     const id = identifier.applySemantics();
 
-    if (symbolTable.internal.funcDir[id] === undefined) {
-      throw new Error(`Error: function call on an undefined function '${id}'`);
-    }
-
-    symbolTable.internal.stacks.operandStack.push('callFunc');
+    symbolTable.handleCheckFuncCall(id);
 
     args.asIteration().applySemantics();
 
