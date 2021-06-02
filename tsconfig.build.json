@@ -9,6 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "strictPropertyInitialization": false,
     "skipLibCheck": true
   },
   "include": ["src"],

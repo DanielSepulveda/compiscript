@@ -22,7 +22,7 @@ const compile = (input: ohm.MatchResult) => {
   semantics(input).applySemantics();
 
   // optional log
-  logAll();
+  // logAll();
 
   const st = symbolTable.getSymbolTable();
 
