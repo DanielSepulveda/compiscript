@@ -128,12 +128,20 @@ export const isNumberType = (type: VarTypes): type is 'int' | 'float' => {
   return type === 'int' || type === 'float';
 };
 
-export function safePop<T>(stack: Stack<T>) {
+type SafePopOptions = {
+  errorMessage?: string;
+};
+
+export function safePop<T>(
+  stack: Stack<T>,
+  { errorMessage }: SafePopOptions = {}
+) {
   const val = stack.pop();
 
   if (val === undefined) {
     throw new Error(
-      `Internal error: Tried to perform 'pop' on a stack and got no value`
+      errorMessage ||
+        `Internal error: Tried to perform 'pop' on a stack and got no value`
     );
   }
 

@@ -42,7 +42,9 @@ export default class Avail {
     const maxAddr = RANGES[counter][1];
 
     if (currentAddr > maxAddr) {
-      throw new Error(`Memory overflow for ${counter}`);
+      throw new Error(
+        `Avail memory overflow for ${counter}. This can happen when you define too many variables`
+      );
     }
 
     return this.counters[counter]++;
@@ -59,7 +61,9 @@ export default class Avail {
     const maxAddr = RANGES[counter][1];
 
     if (currentAddr > maxAddr || currentAddr + amount > maxAddr) {
-      throw new Error(`Memory overflow for ${counter}`);
+      throw new Error(
+        `Avail memory overflow for ${counter}. This can happen when you define too many variables`
+      );
     }
 
     this.counters[counter] += amount;

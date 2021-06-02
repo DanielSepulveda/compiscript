@@ -20,8 +20,21 @@ int function fib(n: int)
   }
 }
 
+void function test(m: string, t: int)
+vars
+  i: int;
+{
+  for (i = 0) until (t - 1) {
+    println(m);
+    i = i + 1;
+  }
+}
+
 main ()
 {
+  if (1 + 2 * 3) {
+    test("hola", 3);
+  }
   println("Resultado fact");
   println(fact(4));
   println("Resulatdo fib");

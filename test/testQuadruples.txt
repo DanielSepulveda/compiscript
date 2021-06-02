@@ -6,7 +6,7 @@ vars
 
 main ()
 {
-  //iA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
+  fA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
   //print("El resultado es", 1 + (iB * iC - fB) / (fC - fD));
   //read(iA);
 
@@ -25,5 +25,5 @@ main ()
     iA = iA + 1;
   }*/
 
-  fA = 5;
+  //fA = 5;
 }

@@ -706,16 +706,11 @@ export async function execute({ onOutput, onInput }: ExecuteParams) {
     try {
       await executeQuad(vm.quadruples[vm.instructionPointer]);
     } catch (e) {
-      if (e instanceof Error) {
-        console.log(e.message);
-      }
       vm.executionStatus = 'error';
+      if (e instanceof Error) {
+        throw new Error(e.message);
+      }
     }
-  }
-
-  if (vm.executionStatus === 'error') {
-    console.log('Virtual machine terminated with an error');
-    return;
   }
 }
 

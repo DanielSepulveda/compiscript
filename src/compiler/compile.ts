@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+// import * as fs from 'fs';
+// import * as path from 'path';
 import ohm from 'ohm-js';
 import semantics from './semantics';
 import { logAll } from './logger';
@@ -7,7 +7,7 @@ import * as symbolTable from './symbolTable';
 import { jsonStringify } from '../utils/helpers';
 import { CompilationOutput } from '../types';
 
-const outputPath = path.join(__dirname, '..', 'out');
+// const outputPath = path.join(__dirname, '..', 'out');
 
 /**
  * The compile function receives a parser output and applies the
@@ -32,13 +32,13 @@ const compile = (input: ohm.MatchResult) => {
     constants: st.constants,
   };
 
-  logOutput(output);
+  // logOutput(output);
 
   return output;
 };
 
-const logOutput = (output: CompilationOutput) => {
-  fs.writeFileSync(path.join(outputPath, 'obj.txt'), jsonStringify(output));
-};
+// const logOutput = (output: CompilationOutput) => {
+//   fs.writeFileSync(path.join(outputPath, 'obj.txt'), jsonStringify(output));
+// };
 
 export default compile;

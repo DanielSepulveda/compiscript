@@ -101,7 +101,7 @@ export function getSymbolTable() {
  */
 export function addFunc(name: string, type: Types, isGlobal: boolean = false) {
   if (symbolTable.funcDir[name]) {
-    throw new Error(`Function ${name} already declared`);
+    throw new Error(`Function ${name} is already declared`);
   }
 
   if (isGlobal) {
@@ -585,7 +585,9 @@ export function performAssign({ isReturn = false } = {}) {
  * of an operand
  */
 export function performPrint() {
-  const valueOperand = safePop(symbolTable.operandStack);
+  const valueOperand = safePop(symbolTable.operandStack, {
+    errorMessage: 'Error: there is no value to print.',
+  });
   safePop(symbolTable.typeStack);
   const valueAddr = safePop(symbolTable.addrStack);
 
@@ -945,13 +947,13 @@ export function handleFuncCall(funcName: string) {
     // Validate correct number of arguments and parameters
     if (argsStack.size > funcToCall.params.length) {
       throw new Error(
-        `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${symbolTable.operandStack.size}`
+        `Error: too many arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${argsStack.size}`
       );
     }
 
     if (argsStack.size < funcToCall.params.length) {
       throw new Error(
-        `Error: missing arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${symbolTable.operandStack.size}`
+        `Error: missing arguments passed to function '${funcToCall.name}' call. Expected ${funcToCall.params.length} but received ${argsStack.size}`
       );
     }
 
