@@ -43,8 +43,32 @@ module.exports = {
           title: 'Docs',
           items: [
             {
-              label: 'Getting Started',
+              label: 'Empezar',
               to: 'docs/',
+            },
+            {
+              label: 'Estructura de programa',
+              to: 'docs/structure',
+            },
+            {
+              label: 'Elementos basicos',
+              to: 'docs/basic-elements',
+            },
+            {
+              label: 'Expresiones',
+              to: 'docs/expressions',
+            },
+            {
+              label: 'Estatutos',
+              to: 'docs/statements',
+            },
+            {
+              label: 'Funciones',
+              to: 'docs/functions',
+            },
+            {
+              label: 'Ejemplos',
+              to: 'docs/examples',
             },
           ],
         },

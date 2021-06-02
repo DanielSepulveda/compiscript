@@ -1,0 +1,133 @@
+---
+title: Funciones
+---
+
+## Declaracion de funciones
+
+Las funciones declaradas siguen la siguiente estructura:
+
+```
+<tipo de retorno> function <nombre> (<lista de parametros>)
+<declaracion de variables locales>
+{
+  ...
+}
+```
+
+Ejemplo:
+
+```
+int function fib(n: int)
+{
+  if (n < 2) {
+    return (n);
+  } else {
+    return (fib(n - 1) + fib(n - 2));
+  }
+}
+
+void function test(m: string, t: int)
+vars
+  i: int;
+{
+  for (i = 0) until (t - 1) {
+    println(m);
+    i = i + 1;
+  }
+}
+```
+
+## Tipo de retorno
+
+Las funciones pueden especificar los siguientes tipos de valores de retorno:
+
+<table>
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Descripcion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>int</code>
+      </td>
+      <td>Regresa un valor entero</td>
+    </tr>
+    <tr>
+      <td>
+        <code>float</code>
+      </td>
+      <td>Regresa un valor flotante</td>
+    </tr>
+    <tr>
+      <td>
+        <code>string</code>
+      </td>
+      <td>Regresa un valor de texto</td>
+    </tr>
+    <tr>
+      <td>
+        <code>void</code>
+      </td>
+      <td>No regresa ningun valor</td>
+    </tr>
+  </tbody>
+</table>
+
+## Parametros
+
+Se pueden especificar cero o mas parametros. Cada parametro tiene que especificar su tipo.
+
+Ejemplo:
+
+```
+int function sum(a: int, b: int) {
+  return (a + b);
+}
+
+float function returnPI() {
+  return (3.1416);
+}
+```
+
+## Variables locales
+
+Si lo requieren, las funciones pueden declarar sus variables locales.
+
+Ejemplo:
+
+```
+void function printMessage (m: string)
+vars
+  i: int;
+{
+  i = 0;
+  while (i < 3) {
+    println(message);
+    i = i + 1;
+  }
+}
+```
+
+## Retorno
+
+Las funciones que no sean de tipo <code>void</code> deben de regresar un valor del mismo tipo de la funcion declarada. La estructura de los estatutos de retorno es la siguiente:
+
+```
+return (<expresion>)
+```
+
+Ejemplo:
+
+```
+int function fib(n: int)
+{
+  if (n < 2) {
+    return (n);
+  } else {
+    return (fib(n - 1) + fib(n - 2));
+  }
+}
+```

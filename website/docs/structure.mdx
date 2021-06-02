@@ -1,0 +1,99 @@
+---
+title: Estructura de un programa
+---
+
+Todos los programas siguen la siguiente estructura:
+
+- Inicio del programa
+  - Declaracion de variables globales
+- Declaracion de funciones
+  - Declaracion de variables locales
+- Funcion principal (main)
+
+## Inicio de programa
+
+```
+Program helloWorld;
+```
+
+### Declaracion de variables globales
+
+```
+Program helloWorld;
+vars
+  i: int;
+```
+
+## Declaracion de funciones
+
+```
+int function sum (n: int) {
+  return (n + 10);
+}
+```
+
+### Declaracion de variables locales
+
+```
+void function printMessage (m: string)
+vars
+  i: int;
+{
+  i = 0;
+  while (i < 3) {
+    println(message);
+    i = i + 1;
+  }
+}
+```
+
+## Funcion principal
+
+```
+main()
+{
+  println("Hello world");
+}
+```
+
+## Ejemplo
+
+Un ejemplo de un programa es el siguiente:
+
+```
+Program helloWorld;
+vars:
+  i, j: int;
+  f: float;
+  message: string;
+
+int function fib(n: int)
+{
+  if (n < 2) {
+    return (n);
+  } else {
+    return (fib(n - 1) + fib(n - 2));
+  }
+}
+
+void function printMessage(m: string) {
+  println(m);
+}
+
+int function sum(n: int)
+vars
+  v: int;
+{
+  v = 10;
+  return (n + v);
+}
+
+main ()
+{
+  printMessage("Resulatdo fib");
+  println(fib(12));
+  printMessage("Resultado sum");
+  println(sum(5));
+}
+
+```

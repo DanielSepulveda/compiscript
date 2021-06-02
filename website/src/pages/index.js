@@ -74,7 +74,7 @@ export default function Home() {
               )}
               to={useBaseUrl('docs/')}
             >
-              Get Started
+              Empezar
             </Link>
           </div>
         </div>

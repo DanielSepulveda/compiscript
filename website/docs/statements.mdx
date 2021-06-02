@@ -1,0 +1,120 @@
+---
+title: Estatutos
+---
+
+Los estatutos pueden ser utilizados dentro de funciones declaradas y dentro de la funcion principal.
+
+## Condicion
+
+```
+  if (<expresion>) {
+    ...
+  }
+
+  if (<expresion>) {
+    ...
+  } else {
+    ...
+  }
+```
+
+Ejemplo:
+
+```
+  if (((1 + 2) * 4 / 2) < 100) {
+    println("Verdadero");
+  }
+
+
+  if (n < 2) {
+    println("Verdadero")
+  } else {
+    println("Falso");
+  }
+```
+
+:::info
+Recuerda que los valores 'verdadero' y 'falso' son expresados a traves de la logica entera. En otras palabras 0 = falso, y todo lo demas es verdadero.
+:::
+
+## Ciclos
+
+### While
+
+Estructura:
+
+```
+while (<expresion>) {
+  ...
+}
+```
+
+Ejemplo:
+
+```
+while (iA > iB * iC) {
+  iA = iA - iD;
+  print(iA);
+}
+```
+
+### For
+
+Estructura:
+
+```
+for (<asignacion>) until (<expresion>) {
+  ...
+}
+```
+
+Ejemplo:
+
+```
+for (iA = 1) until (1 + (iB * iC - iD) / (iC - iD)) {
+  iA = iA + 1;
+}
+```
+
+## Lectura
+
+Estructura:
+
+```
+read(<variables separadas por comas>);
+```
+
+Ejemplo:
+
+```
+read(n);
+read(v[i]);
+read(x, y, z);
+```
+
+## Escritura
+
+Actualmente existen dos formas de escribir valores:
+
+- <code>print</code>
+- <code>println</code>
+
+La unica diferencia es que <code>println</code> escribe una nueva linea al final.
+
+Estructura:
+
+```
+print(<expresiones separadas por comas>);
+println(<expresiones separadas por comas>); // Escribe una nueva linea al final;
+```
+
+Ejemplo:
+
+```
+print(1, 2); // 12
+print(3, 4); // 34
+// En la consola se veria como 1234
+
+println("Hello World");
+println("Nueva linea"); // Este mensaje estaria en una nueva linea;
+```

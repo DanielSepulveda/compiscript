@@ -1,0 +1,137 @@
+---
+title: Expresiones
+---
+
+:::info
+Los operadores estan enlistados de mayor precedencia a menor precedencia
+:::
+
+## Operadores aritmeticos
+
+<table>
+  <thead>
+    <tr>
+      <th>Operacion</th>
+      <th>Operador</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Multiplicacion</td>
+      <td>
+        <code>*</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Division</td>
+      <td>
+        <code>/</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Suma</td>
+      <td>
+        <code>+</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Resta</td>
+      <td>
+        <code>-</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Operadores relacionales
+
+<table>
+  <thead>
+    <tr>
+      <th>Operacion</th>
+      <th>Operador</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Menor que</td>
+      <td>
+        <code> {'<'} </code>
+      </td>
+    </tr>
+    <tr>
+      <td>Mayor que</td>
+      <td>
+        <code> {'>'} </code>
+      </td>
+    </tr>
+    <tr>
+      <td>Menor o igual que</td>
+      <td>
+        <code> {'<='} </code>
+      </td>
+    </tr>
+    <tr>
+      <td>Mayor o igual que</td>
+      <td>
+        <code> {'>='} </code>
+      </td>
+    </tr>
+    <tr>
+      <td>Igual que</td>
+      <td>
+        <code> {'=='} </code>
+      </td>
+    </tr>
+    <tr>
+      <td>Diferente que</td>
+      <td>
+        <code> {'!='} </code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Operadores logicos
+
+<table>
+  <thead>
+    <tr>
+      <th>Operacion</th>
+      <th>Operador</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>And</td>
+      <td>
+        <code> and </code>
+      </td>
+    </tr>
+    <tr>
+      <td>Or</td>
+      <td>
+        <code> or </code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+:::info
+Para sobreescribir la precedencia de los operadores se puede hacer uso de los parentesis
+:::
+
+## Ejemplos
+
+```
+fA = iA * (iB + iC * iD - fA) > iB + (iC * iD - fA);
+
+/*
+  Dentro de las expresiones se pueden hacer llamadas a
+  funciones y accesos a elementos de vectores o matrices
+*/
+
+println(dos((i + k) * i / 4 - 7, f * (3 - 2 + 1)) + 3);
+
+c[i][j] = c[i][j] + (a[i][k] * b[k][j]);
+```

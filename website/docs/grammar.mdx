@@ -1,5 +1,5 @@
 ---
-title: Grammar
+title: Gramatica
 ---
 
 ```
@@ -22,6 +22,7 @@ Compiscript {
   if = "if"
   else = "else"
   print = "print"
+  println = "println"
   function = "function"
   return = "return"
   read = "read"
@@ -30,7 +31,7 @@ Compiscript {
   until = "until"
   type = "int" | "float" | "string"
   void = "void"
-  keyword = program | vars | if       | print   | type
+  keyword = program | vars | if       | println | print | type
             | else  | main | function | return  | read
             | while | for  | until    | void
 
@@ -45,12 +46,14 @@ Compiscript {
           | "0"                                     -- zero
   float (a float) = integer "." decimalDigit* -- completeFloat
           | "." decimalDigit*                 -- decimalFloat
+  number = float | integer
+  signedNumber = "+" number | "-" number
   identifierStart = letter | "_"
   identifierPart = identifierStart | decimalDigit
   identifierName = identifierStart identifierPart*
   identifier (an identifier) = ~keyword identifierName
 
-  literal = string | integer | float
+  literal = string | signedNumber | number
 
   singleLineComment = "//" (~"\n" char)* &("\n" | end)
   multiLineComment = "/*" (~"*/" char)* "*/"
@@ -68,12 +71,12 @@ Compiscript {
 
   ArrayExpression = identifier "[" Expression "]" ("[" Expression "]")?
 
-  CallExpression = identifier "(" Expression ")"
+  CallExpression = identifier "(" ListOf<Expression, ","> ")"
 
-  PrimaryExpression = ArrayExpression
-                    | CallExpression
-                    | identifier
-                    | literal
+  PrimaryExpression = ArrayExpression -- arrExp
+                    | CallExpression -- callExp
+                    | identifier -- id
+                    | literal -- literal
                     | "(" Expression ")" -- parenExp
 
   MultExpression = MultExpression "*" PrimaryExpression -- mult
@@ -86,7 +89,7 @@ Compiscript {
 
   RelExpression = RelExpression "<" AddExpression -- lt
                   | RelExpression ">" AddExpression -- gt
-                  | RelExpression "<=" AddExpression -- ltqe
+                  | RelExpression "<=" AddExpression -- lteq
                   | RelExpression ">=" AddExpression -- gteq
                   | AddExpression
 
@@ -102,21 +105,28 @@ Compiscript {
 
   Expression = OrExpression
 
-  Dimension = "[" decimalDigit ("," decimalDigit)? "]"
-  VariableExpression = identifier Dimension?
+  VariableExpression = ArrayExpression -- varArr
+                      | identifier -- varId
 
   AssignExpression = VariableExpression "=" Expression
 
+  PrintExpression = Expression
+
+  ReadExpression = VariableExpression
+
 /* ------------------------------- Statements ------------------------------- */
 
-  VariableStatement = NonemptyListOf<VariableExpression, ","> ":" type ";"
-  VarDeclaration = "vars" VariableStatement+
+  Dimension = "[" decimalDigit+ "]" ("[" decimalDigit+ "]")?
+  VariableDeclaration = identifier Dimension?
+  VariableStatement = NonemptyListOf<VariableDeclaration, ","> ":" type ";"
+  VarBlock = "vars" VariableStatement+
 
   Statement = AssigmentStatement
             | CallStatement
             | IfStatement
             | IterationStatement
             | ReadStatement
+            | PrintlnStatement
             | PrintStatement
             | ReturnStatement
 
@@ -126,14 +136,17 @@ Compiscript {
 
   CallStatement = CallExpression ";"
 
-  IfStatement = if "(" Expression ")" Block (else Block)?
+  IfElseStatement = else Block
+  IfStatement = if "(" Expression ")" Block IfElseStatement?
 
   IterationStatement = while "(" Expression ")" Block               -- whileDo
-                      | for AssignExpression until Expression Block -- forDo
+                      | for "(" AssignExpression ")" until "(" Expression ")" Block -- forDo
 
-  ReadStatement = read "(" NonemptyListOf<VariableExpression, ","> ")" ";"
+  ReadStatement = read "(" NonemptyListOf<ReadExpression, ","> ")" ";"
 
-  PrintStatement = print "(" NonemptyListOf<Expression, ","> ")" ";"
+  PrintlnStatement = println "(" NonemptyListOf<PrintExpression, ","> ")" ";"
+
+  PrintStatement = print "(" NonemptyListOf<PrintExpression, ","> ")" ";"
 
   ReturnStatement = return "(" Expression ")" ";"
 
@@ -142,7 +155,7 @@ Compiscript {
   FunctionParam = identifier ":" type
   FunctionParams = ListOf<FunctionParam, ",">
   FunctionDeclaration = functionType function identifier "(" FunctionParams ")"
-  FunctionStatement = FunctionDeclaration VarDeclaration? Block
+  FunctionStatement = FunctionDeclaration VarBlock? Block
 
   MainStatement = main "(" ")" Block
 
@@ -150,7 +163,7 @@ Compiscript {
 /*                                   Program                                  */
 /* -------------------------------------------------------------------------- */
 
-  Program = program identifier ";" VarDeclaration? FunctionStatement* MainStatement
+  Program = program identifier ";" VarBlock? FunctionStatement* MainStatement
 }
 
 ```

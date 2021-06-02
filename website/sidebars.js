@@ -1,3 +1,16 @@
 module.exports = {
-  docs: ['getting-started', 'lexico', 'sintaxis', 'grammar'],
+  docs: [
+    'getting-started',
+    'structure',
+    'basic-elements',
+    'expressions',
+    'statements',
+    'functions',
+    'examples',
+    {
+      type: 'category',
+      label: 'Referencia',
+      items: ['lexico', 'sintaxis', 'grammar'],
+    },
+  ],
 };

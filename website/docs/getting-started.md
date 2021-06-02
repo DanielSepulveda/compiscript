@@ -1,28 +1,21 @@
 ---
-title: Getting Started
+title: Instalación
 slug: /
 ---
 
-## Step 1: Generate a new Docusaurus site
-
-If you haven't already, generate a new Docusaurus site using the classic template:
+## Step 1: Crea un nuevo proyecto de nodejs
 
 ```shell
-npx @docusaurus/init@latest init my-website classic
+npm init
 ```
 
-## Step 2: Start your Docusaurus site
-
-Run the development server in the newly created `my-website` folder:
+## Step 2: Instala las dependencias
 
 ```shell
-cd my-website
-
-npx docusaurus start
+yarn add @danielsepulveda/compiscript prompts regenerator-runtime
 ```
 
-Open `docs/getting-started.md` and edit some lines. The site reloads automatically and display your changes.
+## Eso es todo!
 
-## That's it!
-
-Congratulations! You've successfully run and modified your Docusaurus project.
+Con esto ya estas listo para crear tu primer programa. Sigue a las siguientes paginas
+para aprender mas acerca del lenguaje.

@@ -1,0 +1,119 @@
+---
+title: Elementos basicos
+---
+
+## Tipo de datos
+
+Existen 3 tipos de datos basicos que pueden ser utilizados en los programas, los cuales son:
+
+<table>
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Descripcion</th>
+      <th>Ejemplo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>int</code>
+      </td>
+      <td>Numeros enteros</td>
+      <td>
+        <code>-1, 0, 1, 2</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>float</code>
+      </td>
+      <td>Numeros reales con decimales</td>
+      <td>
+        <code>3.1416, -1.3333</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>string</code>
+      </td>
+      <td>Coleccion de caracteres que representan texto</td>
+      <td>
+        <code>"Hello world"</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+:::info
+
+En Compiscript no existe el tipo de dato 'bool', debido a que se utiliza la logica entera. Es decir, el valor <code>0</code> internamente representa el valor 'falso', mientras que cualquier valor diferente de este representa el valor 'verdadero'.
+
+:::
+
+## Declaracion de variables
+
+Las variables, tanto globales como locales, se declaran dentro de bloques. Es posible declarar mas de una variable del mismo tipo a la vez (separadas por comas):
+
+```
+// Variables globales
+Program helloWorld
+vars
+  intVar: int;
+  floatVar: float;
+  stringVar: string;
+
+// Variables locales
+int function sum(n: int)
+vars
+  v: int;
+{
+  ...
+}
+```
+
+### Variables dimensionadas
+
+Se pueden declarar variables que correspondan a vectores (1 dimension) o a matrices (2 dimensiones):
+
+```
+Program helloWorld
+vars
+  vector[4]: int;       // Vector de tamaño 4
+  matriz[2][2]: float;  // Matriz de 2 * 2
+
+main ()
+{
+  vector[1] = 1;
+  matriz[1][0] = 1.0;
+}
+```
+
+:::info
+
+Tanto los vectores como las matrices se indexan a partir del 0
+
+:::
+
+## Asignacion a variables
+
+```
+i = 1;
+f = 3.1416;
+m = "Hello world";
+
+v[2] = v[1] + 1;
+m[2][1] = v[3] * 2.5;
+```
+
+## Comentarios
+
+Se pueden escribir comentarios de una linea o comentarios que cubran varias lineas:
+
+```
+  // comentario de una linea
+
+  /*
+    Comentario de varias lineas
+  */
+```
