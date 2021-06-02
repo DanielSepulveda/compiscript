@@ -51,7 +51,7 @@ module.exports = {
               to: 'docs/structure',
             },
             {
-              label: 'Elementos basicos',
+              label: 'Elementos básicos',
               to: 'docs/basic-elements',
             },
             {

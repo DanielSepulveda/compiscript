@@ -18,4 +18,4 @@ yarn add @danielsepulveda/compiscript prompts regenerator-runtime
 ## Eso es todo!
 
 Con esto ya estas listo para crear tu primer programa. Sigue a las siguientes paginas
-para aprender mas acerca del lenguaje.
+para aprender más acerca del lenguaje.
