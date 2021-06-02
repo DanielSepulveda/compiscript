@@ -1,9 +1,10 @@
 Program patito;
 vars
-  message: string;
+  m1, m2, m3: string;
+  v[4]: int;
 
 main ()
 {
-  read(message);
-  println("hello ", message);
+  read(v[0]);
+  println(v[5]);
 }

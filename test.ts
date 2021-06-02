@@ -5,7 +5,7 @@ import prompts from 'prompts';
 
 require('dotenv').config();
 
-const name = 'testVm.txt';
+const name = 'testRead.txt';
 
 const TESTING_DIR = path.join(__dirname, '/test/');
 const input = fs.readFileSync(TESTING_DIR + name).toString();

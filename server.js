@@ -6,30 +6,34 @@ const prompts = require('prompts');
 
 require('dotenv').config();
 
-const name = 'testVm.txt';
+const name = 'matrixMult.txt';
 
 const TESTING_DIR = path.join(__dirname, '/test/');
 const input = fs.readFileSync(TESTING_DIR + name).toString();
 
-try {
-  const parsed = parser(input);
-  const compiled = compiler(parsed);
-  vm.init(compiled);
-  vm.execute({
-    onOutput: (message) => {
-      process.stdout.write(message);
-    },
-    onInput: async () => {
-      const res = await prompts({
-        name: 'input',
-        type: 'text',
-        message: 'Input',
-      });
+async function test() {
+  try {
+    const parsed = parser(input);
+    const compiled = compiler(parsed);
+    vm.init(compiled);
+    await vm.execute({
+      onOutput: (message) => {
+        process.stdout.write(message);
+      },
+      onInput: async () => {
+        const res = await prompts({
+          name: 'input',
+          type: 'text',
+          message: 'Input',
+        });
 
-      vm.sendInput(res.input);
-    },
-  });
-  console.log('\n');
-} catch (error) {
-  console.log(error.message);
+        vm.sendInput(res.input);
+      },
+    });
+    console.log('\n');
+  } catch (error) {
+    console.log(error.message);
+  }
 }
+
+test();
