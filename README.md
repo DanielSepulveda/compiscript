@@ -11,12 +11,8 @@ npm install
 After that, to run the parser againts test files, run
 
 ```bash
-npm run start (or npm start)
+yarn start (or npm run start)
 ```
-
-### Adding more tests
-
-To run more tests simply add text files under the `src/test/` dir. The script will automatically run the parser against every file inside that dir.
 
 ## Development
 
