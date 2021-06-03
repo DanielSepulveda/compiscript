@@ -5,7 +5,7 @@
 Clone the project, then run
 
 ```bash
-npm install
+yarn (or npm install)
 ```
 
 After that, to run the parser againts test files, run
